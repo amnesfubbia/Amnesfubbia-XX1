@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Amnesfubbia Film | Nonton Film Indonesia</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #080a0f;
+            color: #ffffff;
+        }
+        .movie-card {
+            transition: transform 0.3s ease;
+        }
+        .movie-card:hover {
+            transform: translateY(-8px);
+        }
+        .movie-overlay {
+            background: linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.4) 50%, transparent 100%);
+        }
+        /* Custom scrollbar untuk genre */
+        .genre-scroll::-webkit-scrollbar {
+            display: none;
+        }
+    </style>
+</head>
+<body class="antialiased pb-24 md:pb-0">
+
+    <!-- Navbar -->
+    <nav class="fixed top-0 w-full z-50 bg-[#080a0f]/90 backdrop-blur-xl border-b border-white/10 px-6 py-4">
+        <div class="max-w-6xl mx-auto flex justify-between items-center">
+            <div class="flex flex-col leading-none">
+                <h1 class="text-xl font-extrabold tracking-tighter text-white">AMNESFUBBIA<span class="text-blue-500">FILM</span></h1>
+                <span class="text-[8px] uppercase tracking-[0.3em] text-gray-500 font-bold">Official Streaming Platform</span>
+            </div>
+            
+            <div class="flex items-center gap-6">
+                <div class="relative hidden md:block">
+                    <input type="text" placeholder="Cari film favorit..." class="bg-white/5 border border-white/10 rounded-full py-2 px-10 text-xs focus:ring-2 focus:ring-blue-500 w-64 outline-none transition">
+                    <i class="fa-solid fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 text-xs"></i>
+                </div>
+                <div class="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-xs font-bold">AF</div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Genre Selector -->
+    <div class="mt-24 px-6 max-w-6xl mx-auto">
+        <div class="flex gap-3 overflow-x-auto genre-scroll py-2">
+            <button class="whitespace-nowrap bg-blue-600 px-5 py-2 rounded-full text-[10px] font-bold uppercase tracking-widest">Semua</button>
+            <button class="whitespace-nowrap bg-white/5 border border-white/10 px-5 py-2 rounded-full text-[10px] font-bold uppercase tracking-widest hover:bg-white/10 transition">Horor</button>
+            <button class="whitespace-nowrap bg-white/5 border border-white/10 px-5 py-2 rounded-full text-[10px] font-bold uppercase tracking-widest hover:bg-white/10 transition">Drama</button>
+            <button class="whitespace-nowrap bg-white/5 border border-white/10 px-5 py-2 rounded-full text-[10px] font-bold uppercase tracking-widest hover:bg-white/10 transition">Action</button>
+            <button class="whitespace-nowrap bg-white/5 border border-white/10 px-5 py-2 rounded-full text-[10px] font-bold uppercase tracking-widest hover:bg-white/10 transition">Komedi</button>
+            <button class="whitespace-nowrap bg-white/5 border border-white/10 px-5 py-2 rounded-full text-[10px] font-bold uppercase tracking-widest hover:bg-white/10 transition">Romantis</button>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <main class="max-w-6xl mx-auto px-6 py-10 space-y-12">
+
+        <!-- Section: Film Terbaru -->
+        <section>
+            <div class="flex justify-between items-center mb-8">
+                <div>
+                    <h3 class="text-xl font-bold italic">Koleksi Film Terbaru</h3>
+                    <div class="w-12 h-1 bg-blue-500 mt-1"></div>
+                </div>
+                <div class="flex gap-2">
+                    <button class="w-8 h-8 rounded-full border border-white/10 flex items-center justify-center text-xs text-gray-400"><i class="fa-solid fa-chevron-left"></i></button>
+                    <button class="w-8 h-8 rounded-full border border-white/10 flex items-center justify-center text-xs text-gray-400"><i class="fa-solid fa-chevron-right"></i></button>
+                </div>
+            </div>
+
+            <!-- Grid 1 Baris 3 Film -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8">
+                
+                <!-- Movie 1 -->
+                <div class="movie-card group cursor-pointer">
+                    <div class="relative aspect-video rounded-2xl overflow-hidden shadow-2xl border border-white/5">
+                        <img src="https://images.unsplash.com/photo-1536440136628-849c177e76a1?q=80&w=1025&auto=format&fit=crop" class="w-full h-full object-cover group-hover:scale-110 transition duration-700" alt="Poster Film">
+                        <div class="absolute inset-0 movie-overlay flex flex-col justify-end p-6">
+                            <div class="flex items-center gap-2 mb-2">
+                                <span class="bg-blue-600 text-[8px] font-bold px-2 py-0.5 rounded">HD</span>
+                                <span class="text-yellow-500 text-[10px] font-bold"><i class="fa-solid fa-star"></i> 8.5</span>
+                            </div>
+                            <h4 class="text-lg font-bold leading-tight group-hover:text-blue-400 transition">Kisah Desa Penari</h4>
+                            <div class="flex items-center gap-3 mt-2 text-[10px] font-semibold text-gray-400">
+                                <span>2022</span>
+                                <span class="w-1 h-1 bg-gray-600 rounded-full"></span>
+                                <span>HOROR</span>
+                                <span class="w-1 h-1 bg-gray-600 rounded-full"></span>
+                                <span>2j 10m</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Movie 2 -->
+                <div class="movie-card group cursor-pointer">
+                    <div class="relative aspect-video rounded-2xl overflow-hidden shadow-2xl border border-white/5">
+                        <img src="https://images.unsplash.com/photo-1626814026160-2237a95fc5a0?q=80&w=1470&auto=format&fit=crop" class="w-full h-full object-cover group-hover:scale-110 transition duration-700" alt="Poster Film">
+                        <div class="absolute inset-0 movie-overlay flex flex-col justify-end p-6">
+                            <div class="flex items-center gap-2 mb-2">
+                                <span class="bg-blue-600 text-[8px] font-bold px-2 py-0.5 rounded">HD</span>
+                                <span class="text-yellow-500 text-[10px] font-bold"><i class="fa-solid fa-star"></i> 9.0</span>
+                            </div>
+                            <h4 class="text-lg font-bold leading-tight group-hover:text-blue-400 transition">Pencurian Lukisan Maestro</h4>
+                            <div class="flex items-center gap-3 mt-2 text-[10px] font-semibold text-gray-400">
+                                <span>2022</span>
+                                <span class="w-1 h-1 bg-gray-600 rounded-full"></span>
+                                <span>ACTION</span>
+                                <span class="w-1 h-1 bg-gray-600 rounded-full"></span>
+                                <span>2j 30m</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Movie 3 -->
+                <div class="movie-card group cursor-pointer">
+                    <div class="relative aspect-video rounded-2xl overflow-hidden shadow-2xl border border-white/5">
+                        <img src="https://images.unsplash.com/photo-1594909122845-11baa439b7bf?q=80&w=1470&auto=format&fit=crop" class="w-full h-full object-cover group-hover:scale-110 transition duration-700" alt="Poster Film">
+                        <div class="absolute inset-0 movie-overlay flex flex-col justify-end p-6">
+                            <div class="flex items-center gap-2 mb-2">
+                                <span class="bg-blue-600 text-[8px] font-bold px-2 py-0.5 rounded">HD</span>
+                                <span class="text-yellow-500 text-[10px] font-bold"><i class="fa-solid fa-star"></i> 8.2</span>
+                            </div>
+                            <h4 class="text-lg font-bold leading-tight group-hover:text-blue-400 transition">Apartemen Terlarang</h4>
+                            <div class="flex items-center gap-3 mt-2 text-[10px] font-semibold text-gray-400">
+                                <span>2022</span>
+                                <span class="w-1 h-1 bg-gray-600 rounded-full"></span>
+                                <span>HOROR</span>
+                                <span class="w-1 h-1 bg-gray-600 rounded-full"></span>
+                                <span>1j 55m</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Movie 4 (Row 2) -->
+                <div class="movie-card group cursor-pointer">
+                    <div class="relative aspect-video rounded-2xl overflow-hidden shadow-2xl border border-white/5">
+                        <img src="https://images.unsplash.com/photo-1485846234645-a62644f84728?q=80&w=1459&auto=format&fit=crop" class="w-full h-full object-cover group-hover:scale-110 transition duration-700" alt="Poster Film">
+                        <div class="absolute inset-0 movie-overlay flex flex-col justify-end p-6">
+                            <div class="flex items-center gap-2 mb-2">
+                                <span class="bg-blue-600 text-[8px] font-bold px-2 py-0.5 rounded">HD</span>
+                                <span class="text-yellow-500 text-[10px] font-bold"><i class="fa-solid fa-star"></i> 8.7</span>
+                            </div>
+                            <h4 class="text-lg font-bold leading-tight group-hover:text-blue-400 transition">Pahlawan Petir</h4>
+                            <div class="flex items-center gap-3 mt-2 text-[10px] font-semibold text-gray-400">
+                                <span>2019</span>
+                                <span class="w-1 h-1 bg-gray-600 rounded-full"></span>
+                                <span>ACTION</span>
+                                <span class="w-1 h-1 bg-gray-600 rounded-full"></span>
+                                <span>2j 03m</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Movie 5 (Row 2) -->
+                <div class="movie-card group cursor-pointer">
+                    <div class="relative aspect-video rounded-2xl overflow-hidden shadow-2xl border border-white/5">
+                        <img src="https://images.unsplash.com/photo-1440404653325-ab127d49abc1?q=80&w=1470&auto=format&fit=crop" class="w-full h-full object-cover group-hover:scale-110 transition duration-700" alt="Poster Film">
+                        <div class="absolute inset-0 movie-overlay flex flex-col justify-end p-6">
+                            <div class="flex items-center gap-2 mb-2">
+                                <span class="bg-blue-600 text-[8px] font-bold px-2 py-0.5 rounded">HD</span>
+                                <span class="text-yellow-500 text-[10px] font-bold"><i class="fa-solid fa-star"></i> 9.2</span>
+                            </div>
+                            <h4 class="text-lg font-bold leading-tight group-hover:text-blue-400 transition">Sekolah Rimba</h4>
+                            <div class="flex items-center gap-3 mt-2 text-[10px] font-semibold text-gray-400">
+                                <span>2008</span>
+                                <span class="w-1 h-1 bg-gray-600 rounded-full"></span>
+                                <span>DRAMA</span>
+                                <span class="w-1 h-1 bg-gray-600 rounded-full"></span>
+                                <span>2j 05m</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Movie 6 (Row 2) -->
+                <div class="movie-card group cursor-pointer">
+                    <div class="relative aspect-video rounded-2xl overflow-hidden shadow-2xl border border-white/5">
+                        <img src="https://images.unsplash.com/photo-1517604931442-7e0c8ed2963c?q=80&w=1470&auto=format&fit=crop" class="w-full h-full object-cover group-hover:scale-110 transition duration-700" alt="Poster Film">
+                        <div class="absolute inset-0 movie-overlay flex flex-col justify-end p-6">
+                            <div class="flex items-center gap-2 mb-2">
+                                <span class="bg-blue-600 text-[8px] font-bold px-2 py-0.5 rounded">HD</span>
+                                <span class="text-yellow-500 text-[10px] font-bold"><i class="fa-solid fa-star"></i> 8.4</span>
+                            </div>
+                            <h4 class="text-lg font-bold leading-tight group-hover:text-blue-400 transition">Rahasia Satu Keluarga</h4>
+                            <div class="flex items-center gap-3 mt-2 text-[10px] font-semibold text-gray-400">
+                                <span>2020</span>
+                                <span class="w-1 h-1 bg-gray-600 rounded-full"></span>
+                                <span>DRAMA</span>
+                                <span class="w-1 h-1 bg-gray-600 rounded-full"></span>
+                                <span>2j 01m</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- Newsletter / Community Section -->
+        <section class="bg-gradient-to-br from-blue-600/20 to-transparent p-10 rounded-[2.5rem] border border-white/5 text-center">
+            <h3 class="text-2xl font-bold mb-4">Ingin Request Film?</h3>
+            <p class="text-gray-400 text-sm mb-6 max-w-md mx-auto">Bergabunglah dengan komunitas Amnesfubbia Film untuk mendapatkan update rilisan terbaru setiap hari Sabtu.</p>
+            <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                <input type="email" placeholder="Alamat email kamu..." class="bg-white/5 border border-white/10 rounded-xl px-6 py-3 outline-none focus:ring-2 focus:ring-blue-500 text-sm">
+                <button class="bg-blue-600 px-8 py-3 rounded-xl font-bold text-sm hover:bg-blue-700 transition">Gabung Komunitas</button>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="max-w-6xl mx-auto px-6 py-12 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-8">
+        <div class="flex flex-col items-center md:items-start leading-none">
+            <h1 class="text-lg font-extrabold tracking-tighter text-white">AMNESFUBBIA<span class="text-blue-500">FILM</span></h1>
+            <p class="text-[10px] text-gray-500 font-bold mt-2">© 2024 Amnesfubbia Brand Entertainment</p>
+        </div>
+        <div class="flex gap-8 text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+            <a href="#" class="hover:text-blue-500">Bantuan</a>
+            <a href="#" class="hover:text-blue-500">Privasi</a>
+            <a href="#" class="hover:text-blue-500">Kontak</a>
+        </div>
+    </footer>
+
+    <!-- Mobile Nav -->
+    <div class="md:hidden fixed bottom-0 w-full bg-[#080a0f]/95 backdrop-blur-md border-t border-white/10 flex justify-around py-4 px-2 z-50">
+        <div class="flex flex-col items-center gap-1 text-blue-500">
+            <i class="fa-solid fa-house-chimney text-lg"></i>
+            <span class="text-[8px] font-bold uppercase tracking-wider">Home</span>
+        </div>
+        <div class="flex flex-col items-center gap-1 text-gray-500">
+            <i class="fa-solid fa-fire text-lg"></i>
+            <span class="text-[8px] font-bold uppercase tracking-wider">Tren</span>
+        </div>
+        <div class="flex flex-col items-center gap-1 text-gray-500">
+            <i class="fa-solid fa-bookmark text-lg"></i>
+            <span class="text-[8px] font-bold uppercase tracking-wider">List</span>
+        </div>
+        <div class="flex flex-col items-center gap-1 text-gray-500">
+            <i class="fa-solid fa-circle-user text-lg"></i>
+            <span class="text-[8px] font-bold uppercase tracking-wider">Profil</span>
+        </div>
+    </div>
+
+</body>
+</html>
+
