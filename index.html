@@ -143,6 +143,12 @@
         .about-content { font-size: 14px; line-height: 1.6; color: #ccc; }
         .about-feature { margin-top: 20px; background: #111; padding: 15px; border-radius: 12px; border: 1px solid #222; }
         .about-footer { margin-top: 40px; text-align: center; border-top: 1px solid #222; padding-top: 20px; font-size: 12px; color: #666; }
+
+        /* FULLSCREEN STYLE */
+        #carouselTrack:fullscreen { background: #000; display: flex; align-items: center; }
+        .fs-controls { display: none; position: absolute; top: 0; left: 0; right: 0; bottom: 0; z-index: 9999; pointer-events: none; background: rgba(0,0,0,0.2); }
+        #carouselTrack:fullscreen .fs-controls { display: flex; flex-direction: column; justify-content: space-between; padding: 30px; }
+        .fs-btn { pointer-events: auto; cursor: pointer; font-size: 28px; text-shadow: 0 0 10px rgba(0,0,0,0.8); }
     </style>
 </head>
 <body>
@@ -267,13 +273,25 @@
             <div id="castContainer" class="cast-wrapper px-4 no-scrollbar"></div>
             <div class="relative overflow-hidden">
                 <div class="swipe-overlay" id="swipeOverlay"></div>
-                <div class="carousel-track" id="carouselTrack"></div>
+                <div class="carousel-track" id="carouselTrack">
+                    <div class="fs-controls">
+                        <div class="flex justify-between w-full">
+                            <i class="fa-solid fa-arrow-left fs-btn" onclick="document.exitFullscreen()"></i>
+                            <i class="fa-solid fa-lock fs-btn" onclick="toggleLock()"></i>
+                        </div>
+                        <div class="flex justify-center gap-10 w-full">
+                            <i class="fa-solid fa-pause fs-btn" onclick="alert('Pause (Kontrol via Pemutar)')"></i>
+                            <i class="fa-solid fa-volume-xmark fs-btn" onclick="alert('Mute (Kontrol via Tombol HP)')"></i>
+                        </div>
+                    </div>
+                </div>
                 <div id="carouselDots" class="flex justify-center gap-2 py-3"></div>
             </div>
             <div class="px-4 py-3 flex justify-between items-center">
                 <div class="flex gap-4">
                     <i id="btnLikeModal" class="interaction-icon"></i>
-                    <i class="fa-regular fa-comment interaction-icon"></i>
+                    <i class="fa-solid fa-play text-blue-500 interaction-icon" onclick="goLandscape()"></i>
+                    <i class="fa-solid fa-rotate-right interaction-icon" onclick="location.reload()"></i>
                     <i class="fa-regular fa-paper-plane interaction-icon"></i>
                 </div>
                 <i id="btnBookModal" class="interaction-icon"></i>
@@ -649,19 +667,28 @@
             const vids = [...(dId.videos?.results || []), ...(dEn.videos?.results || [])].filter(v => v.site === 'YouTube' && (v.type === 'Trailer' || v.type === 'Teaser')).slice(0, 4);
             const track = document.getElementById('carouselTrack'), dots = document.getElementById('carouselDots');
             
+            const fsC = track.querySelector('.fs-controls');
             track.querySelectorAll('iframe').forEach(f => f.src = "");
-            track.innerHTML = ''; dots.innerHTML = ''; track.style.transform = 'translateX(0)';
+            track.innerHTML = ''; 
+            if(fsC) track.appendChild(fsC);
+            dots.innerHTML = ''; track.style.transform = 'translateX(0)';
             
             if(vids.length > 0) { 
                 vids.forEach((v, i) => { 
-                    track.innerHTML += `<div class="carousel-slide"><iframe id="yt-${i}" src="https://www.youtube.com/embed/${v.key}?enablejsapi=1&autoplay=${i===0?1:0}&rel=0" class="w-full h-full" allow="autoplay; fullscreen"></iframe></div>`; 
+                    const slide = document.createElement('div');
+                    slide.className = 'carousel-slide';
+                    slide.innerHTML = `<iframe id="yt-${i}" src="https://www.youtube.com/embed/${v.key}?enablejsapi=1&autoplay=${i===0?1:0}&rel=0" class="w-full h-full" allow="autoplay; fullscreen"></iframe>`;
+                    track.appendChild(slide);
                     if(vids.length > 1) {
                         dots.innerHTML += `<div class="dot w-1.5 h-1.5 rounded-full ${i===currentIdx?'bg-blue-500':'bg-zinc-700'}"></div>`; 
                     }
                 }); 
                 document.getElementById('swipeOverlay').style.display = vids.length > 1 ? 'block' : 'none'; 
             } else { 
-                track.innerHTML = `<div class="carousel-slide"><iframe src="https://vidsrc.me/embed/${type}?tmdb=${id}" class="w-full h-full" allowfullscreen></iframe></div>`; 
+                const slide = document.createElement('div');
+                slide.className = 'carousel-slide';
+                slide.innerHTML = `<iframe src="https://vidsrc.me/embed/${type}?tmdb=${id}" class="w-full h-full" allowfullscreen></iframe>`;
+                track.appendChild(slide);
                 document.getElementById('swipeOverlay').style.display = 'none'; 
             }
 
@@ -731,7 +758,9 @@
         function closeModal() { 
             const track = document.getElementById('carouselTrack'); 
             track.querySelectorAll('iframe').forEach(f => f.src = "");
+            const fsC = track.querySelector('.fs-controls');
             track.innerHTML = ''; 
+            if(fsC) track.appendChild(fsC);
             document.getElementById('movieModal').style.display = 'none'; 
             document.body.style.overflow = 'auto';
         }
@@ -742,8 +771,14 @@
         function playVid(url, el) { 
             const track = document.getElementById('carouselTrack'); 
             const dots = document.getElementById('carouselDots'); 
+            const fsC = track.querySelector('.fs-controls');
             track.querySelectorAll('iframe').forEach(f => f.src = "");
-            track.innerHTML = `<div class="carousel-slide"><iframe src="${url}" class="w-full h-full" allowfullscreen></iframe></div>`; 
+            track.innerHTML = ''; 
+            if(fsC) track.appendChild(fsC);
+            const slide = document.createElement('div');
+            slide.className = 'carousel-slide';
+            slide.innerHTML = `<iframe src="${url}" class="w-full h-full" allowfullscreen></iframe>`;
+            track.appendChild(slide);
             track.style.transform = 'translateX(0)'; 
             currentIdx = 0; 
             dots.innerHTML = ''; 
@@ -771,6 +806,28 @@
                     if(newVid) try{newVid.contentWindow.postMessage('{"event":"command","func":"playVideo","args":""}', '*');}catch(e){}
                 } 
             }); 
+        }
+
+        // FULLSCREEN & LANDSCAPE LOGIC
+        function goLandscape() {
+            const track = document.getElementById('carouselTrack');
+            if (track.requestFullscreen) track.requestFullscreen();
+            else if (track.webkitRequestFullscreen) track.webkitRequestFullscreen();
+            
+            if (screen.orientation && screen.orientation.lock) {
+                screen.orientation.lock('landscape').catch(() => {});
+            }
+        }
+
+        function toggleLock() {
+            const btn = event.currentTarget;
+            if(btn.classList.contains('fa-lock')) {
+                btn.classList.replace('fa-lock', 'fa-lock-open');
+                alert("Layar Dibuka");
+            } else {
+                btn.classList.replace('fa-lock-open', 'fa-lock');
+                alert("Layar Terkunci");
+            }
         }
 
         function updateLibButtons(id) { const isL = JSON.parse(localStorage.getItem('likes') || '[]').some(x=>x.id==id); const isB = JSON.parse(localStorage.getItem('bookmarks') || '[]').some(x=>x.id==id); document.getElementById('btnLikeModal').className = isL ? 'fa-solid fa-heart text-red-500 interaction-icon' : 'fa-regular fa-heart interaction-icon'; document.getElementById('btnBookModal').className = isB ? 'fa-solid fa-bookmark text-white interaction-icon' : 'fa-regular fa-bookmark interaction-icon'; document.getElementById('btnLikeModal').onclick = () => toggleLib('likes'); document.getElementById('btnBookModal').onclick = () => toggleLib('bookmarks'); }
