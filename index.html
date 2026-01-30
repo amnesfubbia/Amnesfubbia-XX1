@@ -132,14 +132,6 @@
         .ig-hashtags { color: #e0f1ff; display: block; margin-top: 10px; font-size: 13px; line-height: 1.5; }
         .ig-date { color: #a8a8a8; font-size: 11px; text-transform: uppercase; }
         
-        .comment-item { display: flex; gap: 10px; margin-bottom: 12px; }
-        .comment-avatar { width: 32px; height: 32px; border-radius: 50%; overflow: hidden; background: #262626; flex-shrink: 0; }
-        .comment-content { font-size: 13px; }
-        .comment-user { font-weight: 700; margin-right: 6px; }
-        .comment-text { color: #efefef; line-height: 1.4; }
-        .comment-meta { margin-top: 4px; display: flex; gap: 12px; font-size: 11px; color: #8e8e8e; }
-        .translate-link { color: #fff; font-weight: 600; cursor: pointer; }
-
         /* FULLSCREEN OVERLAY */
         #playerFullscreen { display: none; position: fixed; inset: 0; background: #000; z-index: 10000; }
         .fs-controls { position: absolute; inset: 0; z-index: 10; background: rgba(0,0,0,0.4); display: flex; flex-direction: column; justify-content: space-between; padding: 20px; transition: opacity 0.3s; }
@@ -306,7 +298,7 @@
                 <div class="flex gap-4">
                     <i id="btnLikeModal" class="interaction-icon"></i>
                     <i class="fa-regular fa-comment interaction-icon" onclick="scrollToComments()"></i>
-                    <i class="fa-solid fa-expand interaction-icon" onclick="enterFS()"></i>
+                    <i class="fa-solid fa-rotate interaction-icon" onclick="enterFS()"></i>
                 </div>
                 <i id="btnBookModal" class="interaction-icon"></i>
             </div>
@@ -327,9 +319,21 @@
                     <p id="mTranslateBtn" class="hidden" onclick="handleTranslate()">Lihat terjemahan</p>
                 </div>
                 
-                <div id="commentSection" class="mt-8 border-t border-zinc-900 pt-6">
-                    <h4 class="text-[12px] font-bold mb-4 text-zinc-400">ULASAN PENGGUNA</h4>
-                    <div id="commentList"></div>
+                <div class="mt-8 border-t border-zinc-900 pt-6">
+                    <button onclick="toggleDetail()" id="btnDetail" style="background: transparent; color: #fff; border: 1px solid #333; padding: 10px 15px; border-radius: 8px; cursor: pointer; font-size: 11px; font-weight: 800; text-transform: uppercase; width: 100%; letter-spacing: 1px; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                         <i class="fa-solid fa-circle-info"></i> <span id="btnDetailText">Informasi Detail Film</span>
+                    </button>
+                    
+                    <div id="movieDetailContent" style="display: none; background: #0a0a0a; padding: 15px; border-radius: 8px; border: 1px solid #1a1a1a; margin-top: 10px;">
+                        <div style="display: grid; grid-template-columns: 80px 1fr; gap: 8px; font-size: 13px; color: #ccc;">
+                            <div style="font-weight: 700; color: #fff;">Judul</div><div id="det-title">: -</div>
+                            <div style="font-weight: 700; color: #fff;">Genre</div><div id="det-genre">: -</div>
+                            <div style="font-weight: 700; color: #fff;">Sutradara</div><div id="det-director">: -</div>
+                            <div style="font-weight: 700; color: #fff;">Durasi</div><div id="det-runtime">: -</div>
+                            <div style="font-weight: 700; color: #fff;">Soundtrack</div>
+                            <div id="det-soundtrack" style="font-size: 12px; color: #8e8e8e; line-height: 1.5;">: -</div>
+                        </div>
+                    </div>
                 </div>
 
                 <div id="seriesControl" class="hidden mt-6 p-4 bg-zinc-950 rounded-2xl border border-zinc-900">
@@ -377,6 +381,18 @@
             const isVisible = menu.style.display === 'block';
             menu.style.display = isVisible ? 'none' : 'block';
             document.body.style.overflow = isVisible ? 'auto' : 'hidden';
+        }
+
+        function toggleDetail() {
+            const content = document.getElementById('movieDetailContent');
+            const text = document.getElementById('btnDetailText');
+            if(content.style.display === 'none') {
+                content.style.display = 'block';
+                text.innerText = "Sembunyikan Informasi";
+            } else {
+                content.style.display = 'none';
+                text.innerText = "Informasi Detail Film";
+            }
         }
 
         function backToHome() {
@@ -647,12 +663,27 @@
             document.getElementById('smartSearchDropdown').style.display = 'none'; 
             document.body.style.overflow = 'hidden'; currentIdx = 0; isTranslated = false;
             
+            // RESET DETAIL FILM
+            document.getElementById('movieDetailContent').style.display = 'none';
+            document.getElementById('btnDetailText').innerText = "Informasi Detail Film";
+
             const [rId, rEn, rCast] = await Promise.all([
                 fetch(`https://api.themoviedb.org/3/${type}/${id}?api_key=${API_KEY}&language=id-ID&append_to_response=videos,production_companies`),
                 fetch(`https://api.themoviedb.org/3/${type}/${id}?api_key=${API_KEY}&language=en-US&append_to_response=videos`),
                 fetch(`https://api.themoviedb.org/3/${type}/${id}/credits?api_key=${API_KEY}`)
             ]);
             const dId = await rId.json(), dEn = await rEn.json(), dCast = await rCast.json();
+            
+            // SET DETAIL INFO
+            document.getElementById('det-title').innerText = `: ${dId.title || dId.name || '-'}`;
+            document.getElementById('det-genre').innerText = `: ${(dId.genres || []).map(g => g.name).join(', ')}`;
+            const director = (dCast.crew || []).find(c => c.job === 'Director');
+            document.getElementById('det-director').innerText = `: ${director ? director.name : '-'}`;
+            document.getElementById('det-runtime').innerText = `: ${dId.runtime || dId.episode_run_time?.[0] || '-'} Menit`;
+            
+            // Soundtrack Placeholder (TMDB tidak sediakan API khusus soundtrack di endpoint utama)
+            document.getElementById('det-soundtrack').innerHTML = `: <ul style="list-style: none; padding: 0; margin-top: 5px;"><li>• Main Theme by ${(dCast.crew || []).find(c => c.job === 'Original Music Composer')?.name || 'Composer'}</li></ul>`;
+
             const vids = [...(dId.videos?.results || []), ...(dEn.videos?.results || [])].filter(v => v.site === 'YouTube' && (v.type === 'Trailer' || v.type === 'Teaser')).slice(0, 4);
             const track = document.getElementById('carouselTrack'), dots = document.getElementById('carouselDots');
             track.querySelectorAll('iframe').forEach(f => f.src = "");
@@ -689,45 +720,8 @@
             document.getElementById('mDateDisplay').innerText = rel ? new Date(rel).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) : '';
             document.getElementById('serverList').innerHTML = `<button class="server-btn" onclick="playVid('https://vidsrc.me/embed/${type}?tmdb=${id}', this)">Server 1</button><button class="server-btn" onclick="playVid('https://vidrock.net/embed/${type}/${id}${type==='tv'?'/1/1':''}', this)">Server 2</button><button class="server-btn" onclick="playVid('https://embed.smashystream.com/playere.php?tmdb=${id}', this)">Server 3</button>`;
             if(type === 'tv') { document.getElementById('seriesControl').classList.remove('hidden'); document.getElementById('seasonSel').innerHTML = (dId.seasons||[]).filter(s=>s.season_number>0).map(s=>`<option value="${s.season_number}">Season ${s.season_number}</option>`).join(''); loadEpisodes(); } else { document.getElementById('seriesControl').classList.add('hidden'); }
-            loadComments(id, type); updateLibButtons(id);
+            updateLibButtons(id);
         }
-
-        async function loadComments(id, type) {
-            const list = document.getElementById('commentList');
-            list.innerHTML = '<p class="text-[11px] text-zinc-500">Memuat ulasan...</p>';
-            try {
-                const res = await fetch(`https://api.themoviedb.org/3/${type}/${id}/reviews?api_key=${API_KEY}`);
-                const data = await res.json();
-                if(!data.results || data.results.length === 0) { list.innerHTML = '<p class="text-[11px] text-zinc-500">Belum ada ulasan.</p>'; return; }
-                list.innerHTML = data.results.slice(0, 5).map((rev, idx) => `
-                    <div class="comment-item">
-                        <div class="comment-avatar"><img src="https://ui-avatars.com/api/?name=${rev.author}&background=random&color=fff"></div>
-                        <div class="comment-content">
-                            <span class="comment-user">${rev.author}</span>
-                            <span class="comment-text" id="com-text-${idx}">${rev.content.substring(0, 150)}${rev.content.length > 150 ? '...' : ''}</span>
-                            <div class="comment-meta">
-                                <span>${new Date(rev.created_at).toLocaleDateString('id-ID')}</span>
-                                <span class="translate-link" onclick="translateComment('${encodeURIComponent(rev.content.substring(0, 400))}', ${idx}, this)">Lihat terjemahan</span>
-                            </div>
-                        </div>
-                    </div>
-                `).join('');
-            } catch(e) { list.innerHTML = '<p class="text-xs">Gagal memuat ulasan.</p>'; }
-        }
-
-        async function translateComment(text, idx, btn) {
-            if(btn.innerText === "Lihat terjemahan") {
-                btn.innerText = "Menerjemahkan...";
-                try {
-                    const res = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=id&dt=t&q=${text}`);
-                    const data = await res.json();
-                    document.getElementById(`com-text-${idx}`).innerText = data[0].map(x => x[0]).join('');
-                    btn.innerText = "Lihat versi asli";
-                } catch(e) { btn.innerText = "Gagal"; }
-            } else { loadComments(window.currentMediaId, window.currentMediaType); }
-        }
-
-        function scrollToComments() { document.getElementById('commentSection').scrollIntoView({ behavior: 'smooth' }); }
 
         function enterFS() {
             const fsOverlay = document.getElementById('playerFullscreen');
@@ -736,7 +730,11 @@
             if(!cur) return;
             document.getElementById('fsVideoContainer').innerHTML = `<iframe id="fsIframe" src="${cur.src}" class="w-full h-full" allowfullscreen allow="autoplay"></iframe>`;
             fsOverlay.style.display = 'block';
-            if (screen.orientation && screen.orientation.lock) { screen.orientation.lock('landscape').catch(() => {}); }
+            
+            // AUTO ROTATE TO LANDSCAPE
+            if (screen.orientation && screen.orientation.lock) { 
+                screen.orientation.lock('landscape').catch(e => console.log("Rotate blocked")); 
+            }
             showUI();
         }
 
@@ -744,6 +742,7 @@
             if(e) e.stopPropagation();
             document.getElementById('playerFullscreen').style.display = 'none';
             document.getElementById('fsVideoContainer').innerHTML = '';
+            // UNLOCK ROTATION
             if (screen.orientation && screen.orientation.unlock) { screen.orientation.unlock(); }
         }
 
