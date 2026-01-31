@@ -108,7 +108,7 @@
         .swipe-overlay { position: absolute; inset: 0; z-index: 10; background: transparent; }
         .interaction-icon { font-size: 24px; cursor: pointer; color: #fff; transition: transform 0.1s; }
         .interaction-icon:active { transform: scale(1.2); }
-        .server-btn { width: 100%; padding: 12px 5px; border-radius: 8px; font-size: 8px; font-weight: 800; text-transform: uppercase; border: 1px solid #1c1c1c; text-align: center; cursor: pointer; background: #0a0a0a; color: #fff; transition: all 0.2s; }
+        .server-btn { width: 100%; padding: 12px 5px; border-radius: 8px; font-size: 10px; font-weight: 800; text-transform: uppercase; border: 1px solid #1c1c1c; text-align: center; cursor: pointer; background: #0a0a0a; color: #fff; transition: all 0.2s; }
         .server-btn:active { background: #1c1c1c; }
         .server-btn.active-link { border: 2px solid #fff !important; background: rgba(255,255,255,0.1); }
         .dl-grid { display: grid; grid-template-columns: 1fr; gap: 8px; margin-top: 15px; }
@@ -147,7 +147,7 @@
         .about-feature { margin-top: 20px; background: #111; padding: 15px; border-radius: 12px; border: 1px solid #222; }
         .about-footer { margin-top: 40px; text-align: center; border-top: 1px solid #222; padding-top: 20px; font-size: 12px; color: #666; }
 
-        /* --- LANDSCAPE CONTROLS --- */
+        /* --- NEW LANDSCAPE CONTROLS --- */
         .landscape-overlay {
             display: none; position: fixed; inset: 0; z-index: 9500; background: #000;
         }
@@ -165,7 +165,7 @@
         .ls-btn:active { transform: scale(1.1); }
         .ls-lock-screen { position: absolute; inset: 0; z-index: 11000; display: none; align-items: center; justify-content: center; background: rgba(0,0,0,0.1); }
         
-        /* Fixed Landscape Sizing */
+        /* Landscape Classes */
         .landscape-active #movieModal { overflow: hidden !important; }
         .landscape-active .modal-player { display: block !important; position: fixed; inset: 0; z-index: 9999; }
         .landscape-active #modalScrollTop { height: 100vh; max-width: 100%; padding: 0; }
@@ -360,7 +360,7 @@
                 <div id="serverList" class="grid grid-cols-4 gap-2 mt-6"></div>
                 
                 <div class="dl-grid">
-                    <button id="btnDownload1" class="dl-link-btn" onclick="window.open(`https://dl.vidsrc.vip/${window.currentMediaType}/${window.currentMediaId}`)">Download Sekarang</button>
+                    <button id="btnDownload1" class="dl-link-btn" onclick="window.open(`https://dl.vidsrc.vip/${window.currentMediaType}/${window.currentMediaId}`)">Download</button>
                 </div>
             </div>
         </div>
@@ -391,7 +391,7 @@
             }); 
         };
 
-        /* --- SISTEM NAVIGASI BACK HP (PUSHSTATE) --- */
+        /* --- NAVIGATION BACK HP SYSTEM --- */
         window.onpopstate = function() {
             if (document.getElementById('landscapeOverlay').style.display === 'block') {
                 exitLandscape();
@@ -404,7 +404,7 @@
             }
         };
 
-        /* --- IMPROVED LANDSCAPE FUNCTIONS --- */
+        /* --- LANDSCAPE LOGIC --- */
         async function enterLandscape() {
             const overlay = document.getElementById('landscapeOverlay');
             const lsTitle = document.getElementById('lsTitle');
@@ -414,7 +414,7 @@
             overlay.style.display = 'block';
             showLsUI();
 
-            // Push state agar tombol back HP menutup landscape
+            // Push state for back button handling
             history.pushState({view: 'landscape'}, "");
 
             try {
@@ -437,7 +437,8 @@
             if (screen.orientation && screen.orientation.unlock) {
                 screen.orientation.unlock();
             }
-            // Jika exit manual, hapus history landscape jika masih ada
+            
+            // If exiting manually, clear state
             if (window.history.state && window.history.state.view === 'landscape') {
                 window.history.back();
             }
@@ -496,7 +497,7 @@
             showLsUI();
         }
 
-        /* --- LOGIC CORE --- */
+        /* --- CORE LOGIC --- */
         function updateActiveNav(el) { document.querySelectorAll('.bottom-nav i').forEach(i => i.classList.remove('active-nav')); el.classList.add('active-nav'); }
 
         function toggleSideMenu() {
@@ -567,10 +568,7 @@
         async function openComingSoon() {
             const grid = document.getElementById('searchGrid');
             const overlay = document.getElementById('searchOverlay');
-            const titleInp = document.getElementById('searchInp');
             overlay.style.display = 'block';
-            titleInp.value = '';
-            titleInp.placeholder = "Jadwal Rilis Mendatang...";
             grid.innerHTML = '<div class="col-span-3 text-center py-10 text-zinc-500">Memuat jadwal rilis...</div>';
             document.body.style.overflow = 'hidden';
             history.pushState({view: 'search'}, "");
@@ -719,16 +717,7 @@
             }); 
         }
 
-        function openSearch() { 
-            const titleInp = document.getElementById('searchInp');
-            document.getElementById('searchOverlay').style.display = 'block'; 
-            titleInp.placeholder = "Cari movie, tv, atau aktor...";
-            titleInp.value = ''; 
-            document.getElementById('searchGrid').innerHTML = ''; 
-            titleInp.focus(); 
-            document.body.style.overflow='hidden'; 
-            history.pushState({view: 'search'}, "");
-        }
+        function openSearch() { document.getElementById('searchOverlay').style.display = 'block'; document.getElementById('searchInp').focus(); document.body.style.overflow='hidden'; history.pushState({view: 'search'}, ""); }
         function closeSearch() { document.getElementById('searchOverlay').style.display = 'none'; document.body.style.overflow='auto'; searchQuery=''; currentCastId=''; document.getElementById('smartSearchDropdown').style.display = 'none'; }
         
         function searchAction() { currentLibMode = false; currentCastId = ''; searchQuery = document.getElementById('searchInp').value; document.getElementById('smartSearchDropdown').style.display = 'none'; loadFeed(true); }
@@ -787,7 +776,6 @@
             document.getElementById('movieModal').scrollTop = 0;
             document.getElementById('smartSearchDropdown').style.display = 'none'; document.body.style.overflow = 'hidden'; currentIdx = 0; isTranslated = false;
             
-            // Push state agar tombol back HP menutup modal, bukan keluar aplikasi
             history.pushState({view: 'modal'}, "");
 
             const [rId, rEn, rCast] = await Promise.all([
@@ -835,14 +823,14 @@
             document.getElementById('mDateDisplay').innerText = rel ? new Date(rel).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) : '';
             
             document.getElementById('serverList').innerHTML = `
-                <button class="server-btn" onclick="playVid('https://vidsrc.me/embed/${type}?tmdb=${id}', this)">S1 Me</button>
-                <button class="server-btn" onclick="playVid('https://vidrock.net/embed/${type}/${id}${seriesSuffix}', this)">S2 Rock</button>
-                <button class="server-btn" onclick="playVid('https://vidsrc.icu/embed/${type}/${id}${seriesSuffix}', this)">S3 ICU</button>
-                <button class="server-btn" onclick="playVid('https://vidsrc.to/embed/${type}/${id}${seriesSuffix}', this)">S4 TO</button>
-                <button class="server-btn" onclick="playVid('https://www.2embed.cc/embed/${id}', this)">S5 2Embed</button>
-                <button class="server-btn" onclick="playVid('https://vidfast.pro/embed/${type}/${id}${seriesSuffix}', this)">S6 Fast</button>
-                <button class="server-btn" onclick="playVid('https://embed.smashystream.com/playere.php?tmdb=${id}', this)">S7 Smashy</button>
-                <button class="server-btn" onclick="playVid('https://vidsrc.xyz/embed/${type}/${id}${seriesSuffix}', this)">S8 XYZ</button>
+                <button class="server-btn" onclick="playVid('https://vidsrc.me/embed/${type}?tmdb=${id}', this)">Server 1</button>
+                <button class="server-btn" onclick="playVid('https://vidrock.net/embed/${type}/${id}${seriesSuffix}', this)">Server 2</button>
+                <button class="server-btn" onclick="playVid('https://vidsrc.icu/embed/${type}/${id}${seriesSuffix}', this)">Server 3</button>
+                <button class="server-btn" onclick="playVid('https://vidsrc.to/embed/${type}/${id}${seriesSuffix}', this)">Server 4</button>
+                <button class="server-btn" onclick="playVid('https://www.2embed.cc/embed/${id}', this)">Server 5</button>
+                <button class="server-btn" onclick="playVid('https://vidfast.pro/embed/${type}/${id}${seriesSuffix}', this)">Server 6</button>
+                <button class="server-btn" onclick="playVid('https://embed.smashystream.com/playere.php?tmdb=${id}', this)">Server 7</button>
+                <button class="server-btn" onclick="playVid('https://vidsrc.xyz/embed/${type}/${id}${seriesSuffix}', this)">Server 8</button>
             `;
 
             if(type === 'tv') { document.getElementById('seriesControl').classList.remove('hidden'); document.getElementById('seasonSel').innerHTML = (dId.seasons||[]).filter(s=>s.season_number>0).map(s=>`<option value="${s.season_number}">Season ${s.season_number}</option>`).join(''); loadEpisodes(); } else { document.getElementById('seriesControl').classList.add('hidden'); }
@@ -872,7 +860,7 @@
             document.getElementById('movieModal').style.display = 'none'; 
             document.body.style.overflow = 'auto'; 
             if(document.fullscreenElement) exitLandscape();
-            // Hapus history modal jika back manual
+            
             if (window.history.state && window.history.state.view === 'modal') {
                 window.history.back();
             }
