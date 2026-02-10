@@ -154,30 +154,22 @@
         .landscape-video-container { width: 100%; height: 100%; position: relative; }
         
         .ls-controls {
-            position: absolute; inset: 0; background: linear-gradient(0deg, rgba(0,0,0,0.6) 0%, transparent 50%, rgba(0,0,0,0.6) 100%);
+            position: absolute; inset: 0; background: linear-gradient(0deg, rgba(0,0,0,0.7) 0%, transparent 50%, rgba(0,0,0,0.7) 100%);
             display: flex; flex-direction: column; justify-content: space-between;
-            padding: 20px; opacity: 0; transition: opacity 0.3s; z-index: 10000;
+            padding: 30px; opacity: 0; transition: opacity 0.3s; z-index: 10000; pointer-events: none;
         }
-        .ls-controls.visible { opacity: 1; }
+        .ls-controls.visible { opacity: 1; pointer-events: auto; }
         .ls-top { display: flex; justify-content: space-between; align-items: center; }
-        .ls-center { display: flex; justify-content: center; align-items: center; gap: 60px; }
+        .ls-center { display: flex; justify-content: center; align-items: center; gap: 80px; }
         .ls-btn { color: #fff; font-size: 28px; cursor: pointer; text-shadow: 0 0 15px rgba(0,0,0,0.9); transition: transform 0.1s; }
         .ls-btn:active { transform: scale(1.1); }
-        .ls-lock-screen { position: absolute; inset: 0; z-index: 11000; display: none; align-items: center; justify-content: center; background: rgba(0,0,0,0.1); }
+        .ls-lock-screen { position: absolute; inset: 0; z-index: 11000; display: none; align-items: flex-start; justify-content: flex-end; padding: 30px; background: rgba(0,0,0,0.01); pointer-events: auto; }
         
-        /* Landscape Classes */
+        /* Landscape Mode Overrides */
         .landscape-active #movieModal { overflow: hidden !important; }
-        .landscape-active .modal-player { display: block !important; position: fixed; inset: 0; z-index: 9999; }
         .landscape-active #modalScrollTop { height: 100vh; max-width: 100%; padding: 0; }
         .landscape-active .carousel-slide { height: 100vh; }
         .landscape-active #mainVideoArea { height: 100vh !important; }
-        .landscape-active .ig-post-content, 
-        .landscape-active .cast-wrapper,
-        .landscape-active #carouselDots,
-        .landscape-active .px-4,
-        .landscape-active #seriesControl,
-        .landscape-active #serverList,
-        .landscape-active .dl-grid { display: none !important; }
     </style>
 </head>
 <body>
@@ -194,19 +186,19 @@
     </div>
 
     <div id="landscapeOverlay" class="landscape-overlay" onclick="toggleLsUI()">
-        <div id="lsLockLayer" class="ls-lock-screen" onclick="event.stopPropagation(); unlockScreen()">
-            <i class="fa-solid fa-lock text-5xl text-white opacity-40"></i>
+        <div id="lsLockLayer" class="ls-lock-screen" style="display:none">
+            <i class="fa-solid fa-lock ls-btn text-white opacity-40" onclick="event.stopPropagation(); unlockScreen()"></i>
         </div>
         <div class="ls-controls" id="lsUI">
             <div class="ls-top">
-                <i class="fa-solid fa-arrow-left ls-btn" onclick="event.stopPropagation(); exitLandscape()"></i>
+                <i class="fa-solid fa-arrow-left ls-btn" onclick="event.stopPropagation(); handleLsBack()"></i>
                 <div id="lsTitle" class="text-white font-bold truncate max-w-[60%] text-sm"></div>
                 <i class="fa-solid fa-lock-open ls-btn" onclick="event.stopPropagation(); lockScreen()"></i>
             </div>
             <div class="ls-center">
                 <i id="lsMute" class="fa-solid fa-volume-high ls-btn" onclick="event.stopPropagation(); toggleLsMute()"></i>
                 <i id="lsPlay" class="fa-solid fa-pause ls-btn text-6xl" onclick="event.stopPropagation(); toggleLsPlay()"></i>
-                <i class="fa-solid fa-expand ls-btn" onclick="event.stopPropagation(); exitLandscape()"></i>
+                <i class="fa-solid fa-expand ls-btn" onclick="event.stopPropagation(); handleLsBack()"></i>
             </div>
             <div class="ls-bottom text-center text-[10px] text-zinc-400">Tap untuk menyembunyikan kontrol</div>
         </div>
@@ -391,10 +383,11 @@
             }); 
         };
 
-        /* --- NAVIGATION BACK HP SYSTEM --- */
-        window.onpopstate = function() {
+        /* --- HP BACK BUTTON SYSTEM --- */
+        window.addEventListener('popstate', function(event) {
             if (document.getElementById('landscapeOverlay').style.display === 'block') {
-                exitLandscape();
+                // Jangan panggil history.back() lagi di sini, panggil fungsi bersihnya saja
+                closeLandscapeSilently();
             } else if (document.getElementById('movieModal').style.display === 'block') {
                 closeModal();
             } else if (document.getElementById('searchOverlay').style.display === 'block') {
@@ -402,9 +395,9 @@
             } else if (document.getElementById('sideMenu').style.display === 'block') {
                 toggleSideMenu();
             }
-        };
+        });
 
-        /* --- LANDSCAPE LOGIC --- */
+        /* --- LANDSCAPE CONTROLS LOGIC --- */
         async function enterLandscape() {
             const overlay = document.getElementById('landscapeOverlay');
             const lsTitle = document.getElementById('lsTitle');
@@ -412,9 +405,12 @@
             lsTitle.innerText = document.getElementById('mTitle').innerText;
             document.body.classList.add('landscape-active');
             overlay.style.display = 'block';
+            
+            // Move video area to landscape overlay
+            const videoArea = document.getElementById('mainVideoArea');
+            document.getElementById('landscapeOverlay').appendChild(videoArea);
+            
             showLsUI();
-
-            // Push state for back button handling
             history.pushState({view: 'landscape'}, "");
 
             try {
@@ -427,24 +423,43 @@
             } catch (e) {}
         }
 
-        function exitLandscape() {
+        // Fungsi baru untuk tombol back di layar (UI) agar sinkron dengan back fisik
+        function handleLsBack() {
+            if (window.history.state && window.history.state.view === 'landscape') {
+                window.history.back(); // Biarkan popstate yang menangani penutupan
+            } else {
+                exitLandscape(); // Fallback jika state hilang
+            }
+        }
+
+        // Fungsi khusus untuk keluar dari mode landscape tanpa mengganggu history stack
+        function closeLandscapeSilently() {
             document.body.classList.remove('landscape-active');
             document.getElementById('landscapeOverlay').style.display = 'none';
             
+            // Move video area back to modal sinopsis
+            const videoArea = document.getElementById('mainVideoArea');
+            const castContainer = document.getElementById('castContainer');
+            castContainer.after(videoArea);
+
             if (document.exitFullscreen && document.fullscreenElement) {
                 document.exitFullscreen();
             }
             if (screen.orientation && screen.orientation.unlock) {
                 screen.orientation.unlock();
             }
-            
-            // If exiting manually, clear state
+        }
+
+        function exitLandscape() {
+            closeLandscapeSilently();
+            // Cek jika memang harus mundur history (untuk tombol UI)
             if (window.history.state && window.history.state.view === 'landscape') {
                 window.history.back();
             }
         }
 
         function toggleLsUI() {
+            if(document.getElementById('lsLockLayer').style.display === 'flex') return;
             const ui = document.getElementById('lsUI');
             if(ui.classList.contains('visible')) {
                 ui.classList.remove('visible');
@@ -457,7 +472,11 @@
             const ui = document.getElementById('lsUI');
             ui.classList.add('visible');
             clearTimeout(lsControlTimer);
-            lsControlTimer = setTimeout(() => ui.classList.remove('visible'), 3000);
+            lsControlTimer = setTimeout(() => {
+                if(document.getElementById('lsLockLayer').style.display !== 'flex') {
+                    ui.classList.remove('visible');
+                }
+            }, 3000);
         }
 
         function toggleLsPlay() {
@@ -487,12 +506,11 @@
         }
 
         function lockScreen() {
-            document.getElementById('lsUI').style.display = 'none';
+            document.getElementById('lsUI').classList.remove('visible');
             document.getElementById('lsLockLayer').style.display = 'flex';
         }
 
         function unlockScreen() {
-            document.getElementById('lsUI').style.display = 'flex';
             document.getElementById('lsLockLayer').style.display = 'none';
             showLsUI();
         }
@@ -617,7 +635,7 @@
             const hls = [
                 {n: 'Disney', com: '2|6125|3166|34213', img: 'Disney.png', t: 'movie', s: true},
                 {n: 'Pixar', com: '3', img: 'Pixar.png', t: 'movie', s: true},
-                {n: 'Dreamworks', com: '521|7|1778', img: 'Dreamwork.png', t: 'movie', s: true},
+                {n: 'Dreamworks', com: '521|778', img: 'Dreamwork.png', t: 'movie', s: true},
                 {n: 'Ghibli', com: '10342', img: 'Ghibli.png', t: 'movie', s: true},
                 {n: 'Anime', g: 16, img: 'Anime.png', t: 'movie', c: 'JP', s: true},
                 {n: 'Indonesia', c: 'ID', img: 'Indonesia.png', t: 'movie', s: false},
@@ -859,11 +877,7 @@
             track.innerHTML = ''; 
             document.getElementById('movieModal').style.display = 'none'; 
             document.body.style.overflow = 'auto'; 
-            if(document.fullscreenElement) exitLandscape();
-            
-            if (window.history.state && window.history.state.view === 'modal') {
-                window.history.back();
-            }
+            if(document.body.classList.contains('landscape-active')) closeLandscapeSilently();
         }
 
         function renderSynopsis() { const descEl = document.getElementById('mDesc'), toggleBtn = document.getElementById('mToggleBtn'); if (globalFullDesc.length > 90) { toggleBtn.classList.remove('hidden'); descEl.innerText = isExpanded ? globalFullDesc : globalFullDesc.substring(0, 90) + "..."; toggleBtn.innerText = isExpanded ? "ringkas" : "selengkapnya"; } else { descEl.innerText = globalFullDesc; toggleBtn.classList.add('hidden'); } }
