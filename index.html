@@ -576,13 +576,24 @@
                                 <div class="text-[10px] text-zinc-500 font-medium truncate uppercase tracking-wider">${song.artistName}</div>
                             </div>
                         </div>
-                        <audio controls class="audio-player-mini" src="${song.previewUrl}"></audio>
+                        <audio controls class="audio-player-mini" onplay="stopOtherAudios(this)" src="${song.previewUrl}"></audio>
                     </div>
                 `).join('');
 
             } catch (error) {
                 listCont.innerHTML = '<div class="text-center py-10 text-red-500 text-[10px] uppercase">Gagal memuat musik.</div>';
             }
+        }
+
+        // Fungsi tambahan untuk menghentikan audio lain saat satu lagu diputar
+        function stopOtherAudios(currentAudio) {
+            const allAudios = document.querySelectorAll('.audio-player-mini');
+            allAudios.forEach(audio => {
+                if (audio !== currentAudio) {
+                    audio.pause();
+                    audio.currentTime = 0; // Opsional: Meriset lagu ke awal jika pindah
+                }
+            });
         }
 
         function closeSoundtrack() {
@@ -1272,20 +1283,14 @@
         function renderSynopsis() { const descEl = document.getElementById('mDesc'), toggleBtn = document.getElementById('mToggleBtn'); if (globalFullDesc.length > 90) { toggleBtn.classList.remove('hidden'); descEl.innerText = isExpanded ? globalFullDesc : globalFullDesc.substring(0, 90) + "..."; toggleBtn.innerText = isExpanded ? "ringkas" : "selengkapnya"; } else { descEl.innerText = globalFullDesc; toggleBtn.classList.add('hidden'); } }
         function handleToggleDesc() { isExpanded = !isExpanded; renderSynopsis(); }
         
-        // --- PERBAIKAN: Fungsi PlayVid yang lebih dinamis agar lagu sebelumnya BERHENTI ---
+        // --- PERBAIKAN: Fungsi PlayVid yang lebih dinamis ---
         function playVid(url, el) { 
             const track = document.getElementById('carouselTrack'); 
             const dots = document.getElementById('carouselDots'); 
             
             const finalUrl = url.includes('?') ? `${url}&enablejsapi=1&autoplay=1&mute=0` : `${url}?enablejsapi=1&autoplay=1&mute=0`;
             
-            // CRITICAL: Hapus semua iframe lama sebelum memutar lagu/video baru agar suara tidak campur
-            track.querySelectorAll('iframe').forEach(f => { 
-                f.src = ""; // Clear src to stop loading
-                f.remove(); // Remove from DOM to stop playback
-            });
-            
-            // Tambahkan iframe baru ke track yang sudah bersih
+            track.querySelectorAll('iframe').forEach(f => { f.src = ""; f.remove(); });
             track.innerHTML = `<div class="carousel-slide">
                 <iframe id="player-frame" src="${finalUrl}" class="w-full h-full" allowfullscreen allow="autoplay"></iframe>
             </div>`; 
