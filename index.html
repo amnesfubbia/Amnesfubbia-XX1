@@ -127,15 +127,16 @@
         .interaction-icon { font-size: 24px; cursor: pointer; color: #fff; transition: transform 0.1s; }
         .interaction-icon:active { transform: scale(1.2); }
         
-        /* SERVER LIST SCROLL HORIZONTAL */
-        .server-scroll-wrapper { display: flex; overflow-x: auto; gap: 6px; padding: 10px 0; scrollbar-width: none; }
+        /* SERVER LIST SCROLL HORIZONTAL - FIX AREA */
+        .server-scroll-wrapper { display: flex; overflow-x: auto; gap: 6px; padding: 10px 0; scrollbar-width: none; white-space: nowrap; -webkit-overflow-scrolling: touch; }
         .server-scroll-wrapper::-webkit-scrollbar { display: none; }
-        .server-btn { flex: 1; min-width: 0; padding: 11px 0; border-radius: 12px; font-size: 11px; font-weight: 800; text-transform: uppercase; border: 1px solid #333; text-align: center; cursor: pointer; background: #000; color: #fff; transition: all 0.2s; }
+        .server-btn { flex: 0 0 auto; width: 100px; padding: 11px 0; border-radius: 12px; font-size: 11px; font-weight: 800; text-transform: uppercase; border: 1px solid #333; text-align: center; cursor: pointer; background: #000; color: #fff; transition: all 0.2s; }
         .server-btn:active { background: #1c1c1c; }
         .server-btn.active-link { border: 2px solid #fff !important; background: rgba(255,255,255,0.1); }
         
-        /* Merapatkan jarak di area download dan server */
-        .dl-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-top: 10px; }
+        /* Download grid tetap 3 kolom untuk Trailer dan Download */
+        .dl-grid { display: flex; flex-direction: column; gap: 6px; margin-top: 10px; }
+        .dl-top-row { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; }
         .dl-link-btn { width: 100%; padding: 11px 0; border-radius: 12px; background: #000; color: #fff; font-size: 11px; font-weight: 800; text-transform: uppercase; text-align: center; border: 1px solid #333; cursor: pointer; }
         
         .cast-wrapper { display: flex; overflow-x: auto; gap: 15px; padding: 15px 0; scrollbar-width: none; }
@@ -462,9 +463,11 @@
                 </div>
 
                 <div class="dl-grid">
-                    <button class="dl-link-btn" onclick="changeServer(21, this)">Trailer</button>
-                    <button id="btnDownload1" class="dl-link-btn" onclick="handleDownload()">Download</button>
-                    <div id="serverList" class="server-scroll-wrapper" style="padding: 0; margin: 0;"></div>
+                    <div class="dl-top-row">
+                        <button class="dl-link-btn" onclick="changeServer(21, this)">Trailer</button>
+                        <button id="btnDownload1" class="dl-link-btn" onclick="handleDownload()">Download</button>
+                    </div>
+                    <div id="serverList" class="server-scroll-wrapper"></div>
                 </div>
             </div>
         </div>
@@ -916,11 +919,30 @@
             } catch (e) { list.innerHTML = '<div class="text-center py-10">Gagal memuat data.</div>'; }
         }
 
-        function searchByCast(castId) { 
-            closeModal(); currentCastId = castId; searchQuery = ''; document.getElementById('searchInp').value = ''; 
-            document.getElementById('searchOverlay').style.display = 'block'; document.getElementById('smartSearchDropdown').style.display = 'none';
-            document.body.style.overflow='hidden'; 
-            if (!window.history.state || window.history.state.view !== 'search') { history.pushState({view: 'search'}, ""); }
+        function searchAction() { 
+            currentLibMode = false; currentCastId = ''; searchQuery = document.getElementById('searchInp').value; 
+            document.getElementById('calendarHeader').classList.add('hidden');
+            document.getElementById('smartSearchDropdown').style.display = 'none'; 
+            loadFeed(true); 
+        }
+
+        function toggleFilterBar() { const b = document.getElementById('filterBar'); b.style.display = b.style.display === 'block' ? 'none' : 'block'; }
+        
+        function setSchedule(v, el) { 
+            currentLibMode = false; currentCastId = ''; searchQuery = ''; 
+            const isActive = el.classList.contains('active');
+            document.querySelectorAll('.btn-ig').forEach(b=>b.classList.remove('active')); 
+            if(isActive) { currentSchedule = 'trending'; } 
+            else { el.classList.add('active'); currentSchedule = v; }
+            if(currentType === 'multi') currentType = 'movie';
+            loadFeed(true); 
+        }
+
+        function setFilter(k, v, el) { 
+            currentLibMode = false; currentCastId = ''; searchQuery = ''; 
+            currentType = v; 
+            document.querySelectorAll('.stat-item').forEach(s => s.classList.remove('active-stat'));
+            el.classList.add('active-stat');
             loadFeed(true); 
         }
 
@@ -1041,33 +1063,6 @@
             searchQuery=''; currentCastId=''; document.getElementById('searchInp').value = '';
             document.getElementById('smartSearchDropdown').style.display = 'none'; 
             updateActiveNav(document.getElementById('homeBtnNav'));
-        }
-        
-        function searchAction() { 
-            currentLibMode = false; currentCastId = ''; searchQuery = document.getElementById('searchInp').value; 
-            document.getElementById('calendarHeader').classList.add('hidden');
-            document.getElementById('smartSearchDropdown').style.display = 'none'; 
-            loadFeed(true); 
-        }
-
-        function toggleFilterBar() { const b = document.getElementById('filterBar'); b.style.display = b.style.display === 'block' ? 'none' : 'block'; }
-        
-        function setSchedule(v, el) { 
-            currentLibMode = false; currentCastId = ''; searchQuery = ''; 
-            const isActive = el.classList.contains('active');
-            document.querySelectorAll('.btn-ig').forEach(b=>b.classList.remove('active')); 
-            if(isActive) { currentSchedule = 'trending'; } 
-            else { el.classList.add('active'); currentSchedule = v; }
-            if(currentType === 'multi') currentType = 'movie';
-            loadFeed(true); 
-        }
-
-        function setFilter(k, v, el) { 
-            currentLibMode = false; currentCastId = ''; searchQuery = ''; 
-            currentType = v; 
-            document.querySelectorAll('.stat-item').forEach(s => s.classList.remove('active-stat'));
-            el.classList.add('active-stat');
-            loadFeed(true); 
         }
 
         function setYear(y) { 
@@ -1226,29 +1221,13 @@
             const rel = dId.release_date || dId.first_air_date || ""; 
             document.getElementById('mDateDisplay').innerText = rel ? new Date(rel).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) : '';
             
-            // Generate Server List (Server 1 Visible, Server 2-20 scrollable)
-            document.getElementById('serverList').innerHTML = `
-                <button class="server-btn active-link" onclick="changeServer(1, this)">Server 1</button>
-                <button class="server-btn" onclick="changeServer(2, this)">Server 2</button>
-                <button class="server-btn" onclick="changeServer(3, this)">Server 3</button>
-                <button class="server-btn" onclick="changeServer(4, this)">Server 4</button>
-                <button class="server-btn" onclick="changeServer(5, this)">Server 5</button>
-                <button class="server-btn" onclick="changeServer(6, this)">Server 6</button>
-                <button class="server-btn" onclick="changeServer(7, this)">Server 7</button>
-                <button class="server-btn" onclick="changeServer(8, this)">Server 8</button>
-                <button class="server-btn" onclick="changeServer(9, this)">Server 9</button>
-                <button class="server-btn" onclick="changeServer(10, this)">Server 10</button>
-                <button class="server-btn" onclick="changeServer(11, this)">Server 11</button>
-                <button class="server-btn" onclick="changeServer(12, this)">Server 12</button>
-                <button class="server-btn" onclick="changeServer(13, this)">Server 13</button>
-                <button class="server-btn" onclick="changeServer(14, this)">Server 14</button>
-                <button class="server-btn" onclick="changeServer(15, this)">Server 15</button>
-                <button class="server-btn" onclick="changeServer(16, this)">Server 16</button>
-                <button class="server-btn" onclick="changeServer(17, this)">Server 17</button>
-                <button class="server-btn" onclick="changeServer(18, this)">Server 18</button>
-                <button class="server-btn" onclick="changeServer(19, this)">Server 19</button>
-                <button class="server-btn" onclick="changeServer(20, this)">Server 20</button>
-            `;
+            // SERVER LIST FIX: Generate Server 1 sampai Server 20
+            let serverButtonsHTML = '';
+            for (let srv = 1; srv <= 20; srv++) {
+                const activeClass = (srv === 1) ? 'active-link' : '';
+                serverButtonsHTML += `<button class="server-btn ${activeClass}" onclick="changeServer(${srv}, this)">Server ${srv}</button>`;
+            }
+            document.getElementById('serverList').innerHTML = serverButtonsHTML;
 
             if(type === 'tv') { document.getElementById('seriesControl').classList.remove('hidden'); document.getElementById('seasonSel').innerHTML = (dId.seasons||[]).filter(s=>s.season_number>0).map(s=>`<option value="${s.season_number}">Season ${s.season_number}</option>`).join(''); loadEpisodes(); } else { document.getElementById('seriesControl').classList.add('hidden'); }
             updateLibButtons(id);
@@ -1297,7 +1276,7 @@
         function changeServer(srvIdx, el) {
             activeServerIdx = srvIdx;
             document.querySelectorAll('.server-btn').forEach(b => b.classList.remove('active-link'));
-            // Jika trailer dipencet, hapus status aktif di tombol server lain
+            // Jika trailer dipencet (lewat tombol trailer di grid download)
             if (srvIdx === 21) {
                 replayTrailer();
                 return;
