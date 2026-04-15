@@ -2198,10 +2198,9 @@
 
         function lsChangeServer(srvIdx, el) {
             activeServerIdx = srvIdx;
-            // FIX BUG 6: gunakan attribute onclick untuk match tombol yang tepat
-            // nth-child tidak akurat setelah server 18 & 20 dihapus
+            // update main server list
             document.querySelectorAll('.server-btn').forEach(b => b.classList.remove('active-link'));
-            const mainBtn = document.querySelector(`.server-btn[onclick*="changeServer(${srvIdx},"]`);
+            const mainBtn = document.querySelector(`.server-btn:nth-child(${srvIdx})`);
             if (mainBtn) mainBtn.classList.add('active-link');
             // update ls panel
             document.querySelectorAll('.ls-srv-btn').forEach(b => b.classList.remove('active-link'));
@@ -2290,34 +2289,10 @@
 
         async function fetchWithCache(url) {
             const cached = sessionStorage.getItem(url);
-            if (cached) {
-                const parsed = JSON.parse(cached);
-                // FIX BUG 7: jangan pakai cache yang berisi error response
-                if (!parsed.__error) return parsed;
-            }
+            if (cached) return JSON.parse(cached);
             const res = await fetch(url);
-            // FIX BUG 7: hanya cache jika response sukses (2xx)
-            // Response error (404/429/500) TIDAK boleh masuk cache
-            if (!res.ok) {
-                throw new Error(`HTTP ${res.status}: ${url}`);
-            }
             const data = await res.json();
-            // FIX SARAN: batasi ukuran sessionStorage agar tidak overflow
-            // Jika sudah > 3MB, bersihkan cache lama
-            try {
-                const cacheSize = JSON.stringify(sessionStorage).length;
-                if (cacheSize > 3 * 1024 * 1024) {
-                    // Hapus 30% cache terlama (hapus key pertama sebanyak 30% dari total)
-                    const keys = Object.keys(sessionStorage);
-                    const toDelete = Math.ceil(keys.length * 0.3);
-                    keys.slice(0, toDelete).forEach(k => sessionStorage.removeItem(k));
-                }
-                sessionStorage.setItem(url, JSON.stringify(data));
-            } catch(e) {
-                // QuotaExceededError: bersihkan semua cache lalu coba lagi
-                sessionStorage.clear();
-                try { sessionStorage.setItem(url, JSON.stringify(data)); } catch(e2) {}
-            }
+            sessionStorage.setItem(url, JSON.stringify(data));
             return data;
         }
 
@@ -2585,29 +2560,6 @@
             history.pushState(null, "", window.location.pathname);
         }
 
-        // Cache lokal untuk hasil smart search — hemat API call & lebih cepat
-        const _searchCache = new Map();
-
-        function _renderSmartDropdown(results, drop) {
-            if (!results.length) { drop.style.display = 'none'; return; }
-            drop.innerHTML = results.slice(0, 5).map(m => {
-                const mType = m.media_type || 'movie';
-                const mId = m.id;
-                const isPerson = mType === 'person';
-                const clickAction = isPerson ? `openActorProfile(${mId})` : `openModal(${mId}, '${mType}')`;
-                const meta = isPerson ? 'Pemeran / Aktor' : (mType === 'tv' ? 'tv' : 'movie');
-                const imgPath = m.poster_path || m.profile_path || '';
-                return `<div class="smart-item" onclick="${clickAction}; document.getElementById('smartSearchDropdown').style.display='none';">
-                    <img src="https://image.tmdb.org/t/p/w92${imgPath}" onerror="this.src='https://via.placeholder.com/35x50?text=?'">
-                    <div class="smart-info">
-                        <span class="smart-name">${m.title || m.name}</span>
-                        <span class="smart-meta">${meta}</span>
-                    </div>
-                </div>`;
-            }).join('');
-            drop.style.display = 'block';
-        }
-
         function initSmartSearch() { 
             const inp = document.getElementById('searchInp'); 
             const drop = document.getElementById('smartSearchDropdown'); 
@@ -2615,28 +2567,30 @@
             inp.addEventListener('input', () => { 
                 clearTimeout(timeout); 
                 const q = inp.value.trim(); 
-                if(q.length < 2) { drop.style.display = 'none'; return; }
-
-                // SARAN: cek cache lokal dulu — tampil instan tanpa tunggu API
-                if (_searchCache.has(q)) {
-                    _renderSmartDropdown(_searchCache.get(q), drop);
-                    return; // sudah ada cache, tidak perlu hit API
-                }
-
-                // Debounce 300ms sebelum hit API
+                if(q.length < 2) { drop.style.display = 'none'; return; } 
                 timeout = setTimeout(async () => { 
                     try { 
                         const res = await fetch(`https://api.themoviedb.org/3/search/multi?query=${encodeURIComponent(q)}&api_key=${API_KEY}`); 
-                        if (!res.ok) return;
                         const data = await res.json(); 
-                        const results = (data.results || []).slice(0, 5);
-                        // Simpan ke cache lokal (max 50 query)
-                        if (_searchCache.size >= 50) {
-                            const firstKey = _searchCache.keys().next().value;
-                            _searchCache.delete(firstKey);
-                        }
-                        _searchCache.set(q, results);
-                        _renderSmartDropdown(results, drop);
+                        const results = (data.results || []).slice(0, 5); 
+                        if(results.length) { 
+                            drop.innerHTML = results.map(m => {
+                                const mType = m.media_type || 'movie';
+                                const mId = m.id;
+                                const isPerson = mType === 'person';
+                                const clickAction = isPerson ? `openActorProfile(${mId})` : `openModal(${mId}, '${mType}')`;
+                                const meta = isPerson ? 'Pemeran / Aktor' : (mType === 'tv' ? 'tv' : 'movie');
+                                const imgPath = m.poster_path || m.profile_path || '';
+                                return `<div class="smart-item" onclick="${clickAction}; document.getElementById('smartSearchDropdown').style.display='none';">
+                                    <img src="https://image.tmdb.org/t/p/w92${imgPath}" onerror="this.src='https://via.placeholder.com/35x50?text=?'">
+                                    <div class="smart-info">
+                                        <span class="smart-name">${m.title || m.name}</span>
+                                        <span class="smart-meta">${meta}</span>
+                                    </div>
+                                </div>`;
+                            }).join(''); 
+                            drop.style.display = 'block'; 
+                        } else { drop.style.display = 'none'; } 
                     } catch(e){} 
                 }, 300); 
             }); 
@@ -2756,9 +2710,7 @@
             document.getElementById('searchOverlay').style.display = 'block';
             document.getElementById('smartSearchDropdown').style.display = 'none';
             showSearchResults();
-            document.body.style.overflow='hidden';
-            // FIX BUG 5: update nav aktif agar ikon search highlight
-            updateActiveNav(document.getElementById('searchBtnNav'));
+            document.body.style.overflow='hidden'; 
             history.pushState({view: 'search'}, "");
             loadFeed(true); 
         }
@@ -3178,17 +3130,12 @@
             
             history.pushState({view: 'modal'}, "");
 
-            // FIX Ketahanan: Promise.allSettled agar satu fetch gagal tidak batalkan semua
-            const [rId, rEn, rCast, rExt] = await Promise.allSettled([
+            const [dId, dEn, dCast, dExt] = await Promise.all([
                 fetchWithCache(`https://api.themoviedb.org/3/${type}/${id}?api_key=${API_KEY}&language=id-ID&append_to_response=videos,production_companies&include_video_language=en,id,hi,th,ko,ja,ru,null`),
                 fetchWithCache(`https://api.themoviedb.org/3/${type}/${id}?api_key=${API_KEY}&language=en-US`),
                 fetchWithCache(`https://api.themoviedb.org/3/${type}/${id}/credits?api_key=${API_KEY}`),
                 fetchWithCache(`https://api.themoviedb.org/3/${type}/${id}/external_ids?api_key=${API_KEY}`)
             ]);
-            const dId   = rId.status   === 'fulfilled' ? rId.value   : {};
-            const dEn   = rEn.status   === 'fulfilled' ? rEn.value   : {};
-            const dCast = rCast.status === 'fulfilled' ? rCast.value : {};
-            const dExt  = rExt.status  === 'fulfilled' ? rExt.value  : {};
             currentImdbId = dExt.imdb_id || ""; 
             originalIndoDesc = dId.overview || "";
             globalEnDesc = dEn.overview || "";
@@ -3351,22 +3298,14 @@
         function renderSynopsis() { const descEl = document.getElementById('mDesc'), toggleBtn = document.getElementById('mToggleBtn'); if (globalFullDesc.length > 90) { toggleBtn.classList.remove('hidden'); descEl.innerText = isExpanded ? globalFullDesc : globalFullDesc.substring(0, 90) + "..."; toggleBtn.innerText = isExpanded ? "ringkas" : "selengkapnya"; } else { descEl.innerText = globalFullDesc; toggleBtn.classList.add('hidden'); } }
         function handleToggleDesc() { isExpanded = !isExpanded; renderSynopsis(); }
         
-        let _loaderTimer = null;
-
         function playVid(url, el) { 
             const track = document.getElementById('carouselTrack'); 
             const dots = document.getElementById('carouselDots'); 
             const loader = document.getElementById('videoLoader');
             
-            // Reset timer loader sebelumnya
-            if (_loaderTimer) { clearTimeout(_loaderTimer); _loaderTimer = null; }
             loader.classList.remove('hidden');
-
-            // Jangan tambah param YouTube ke URL server streaming
-            // vidrock/vidstorm tidak kenal enablejsapi/mute → URL invalid
-            const isYT = url.includes('youtube.com') || url.includes('youtu.be');
-            const isDM = url.includes('dailymotion.com');
-            const finalUrl = url; // URL dipakai apa adanya, tanpa tambahan param
+            
+            const finalUrl = url.includes('?') ? `${url}&enablejsapi=1&autoplay=1&mute=0` : `${url}?enablejsapi=1&autoplay=1&mute=0`;
             
             track.querySelectorAll('iframe').forEach(f => { f.src = ""; f.remove(); });
             
@@ -3375,18 +3314,11 @@
             newIframe.src = finalUrl;
             newIframe.className = "w-full h-full";
             newIframe.allowFullscreen = true;
-            newIframe.setAttribute('allow', 'autoplay; fullscreen; picture-in-picture');
+            newIframe.allow = "autoplay";
             
-            // FIX BUG 2: onload sering tidak terpanggil di mobile untuk cross-origin iframe
-            // Fallback: sembunyikan loader setelah 6 detik bagaimanapun kondisinya
             newIframe.onload = () => {
                 loader.classList.add('hidden');
-                if (_loaderTimer) { clearTimeout(_loaderTimer); _loaderTimer = null; }
             };
-            _loaderTimer = setTimeout(() => {
-                loader.classList.add('hidden');
-                _loaderTimer = null;
-            }, 6000);
             
             track.innerHTML = '';
             const slide = document.createElement('div');
@@ -3479,14 +3411,7 @@
             if(mode === 'likes' || mode === 'bookmarks') { currentLibMode = true; showLibrary(mode); } else { currentLibMode = false; currentCastId = ''; searchQuery = ''; currentType='multi'; currentSchedule='trending'; currentCompany=''; loadFeed(true); } 
         }
         async function showLibrary(k) { const items = JSON.parse(localStorage.getItem(k) || '[]'); const grid = document.getElementById('feedGrid'); grid.innerHTML = ''; if (!items.length) { grid.innerHTML = '<div class="col-span-3 text-center py-20 text-zinc-500 text-xs">Belum ada konten disimpan</div>'; return; } const promises = items.map(i => fetchWithCache(`https://api.themoviedb.org/3/${i.type}/${i.id}?api_key=${API_KEY}&language=id-ID`).then(r => r)); const results = await Promise.all(promises); renderGrid(results.filter(m => m.id), grid); }
-        window.onscroll = () => { 
-            // FIX Logika: jangan trigger infinite scroll saat searchOverlay terbuka
-            const isSearchOpen = document.getElementById('searchOverlay').style.display === 'block';
-            if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight - 1000 
-                && !loading && !searchQuery && !currentLibMode && !isSearchOpen) { 
-                page++; loadFeed(false); 
-            } 
-        };
+        window.onscroll = () => { if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight - 1000 && !loading && !searchQuery && !currentLibMode) { page++; loadFeed(false); } };
 
         // ===== THEME TOGGLE (disabled - UI removed) =====
         function toggleTheme() {
