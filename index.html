@@ -6167,8 +6167,8 @@
             const existingIds = new Set();
             grid.querySelectorAll('.post-card[data-id]').forEach(c => existingIds.add(c.dataset.id));
             items.forEach(m => {
-                // Tab Actor (HANYA saat search mode aktif & tab person)
-                if (window._isSearchMode && searchTabType === 'person') {
+                // Tab Actor (HANYA saat search mode aktif & tab person & ada query)
+                if (window._isSearchMode && searchTabType === 'person' && searchQuery) {
                     if (!m.profile_path && !m.poster_path) return;
                     if (existingIds.has(String(m.id))) return;
                     existingIds.add(String(m.id));
@@ -6310,9 +6310,16 @@
             document.getElementById('calendarHeader').classList.add('hidden');
             document.body.style.overflow = 'auto'; 
             searchQuery = ''; currentCastId = '';
+            window._isSearchMode = false;
+            searchTabType = 'multi';
             document.getElementById('searchInp').value = '';
             document.getElementById('searchClearBtn').style.display = 'none';
             document.getElementById('smartSearchDropdown').style.display = 'none';
+            // Reset tab pencarian ke All
+            document.querySelectorAll('#searchTypeTabs .search-tab').forEach(t => t.classList.remove('active'));
+            const stabAll = document.getElementById('stab-all');
+            if (stabAll) stabAll.classList.add('active');
+            document.getElementById('searchTypeTabs').style.display = 'none';
             // Reset filter bar
             const filterBar = document.getElementById('searchFilterBar');
             if (filterBar) filterBar.style.display = 'none';
