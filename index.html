@@ -4844,18 +4844,15 @@
                 _reelsData.push(...newReels);
                 _reelsLoaded = true;
 
-                newReels.forEach(reel => {
+                newReels.forEach((reel, reelIdx) => {
                     const lib = getReelLibStatus(reel.movieId);
                     const slide = document.createElement('div');
                     slide.className = 'reel-slide';
                     slide.dataset.movieId = reel.movieId;
                     slide.dataset.type = reel.type;
 
-                    // autoplay=1 agar langsung main saat slide pertama dimuat
-                    // js_api diaktifkan agar bisa pause via postMessage
-                    // enablejsapi=1 wajib agar YT.Player onStateChange bekerja
-                    // controls=1 dibiarkan agar event state change tidak diblokir
-                    const isFirstReel = isNew && _reelsData.length === 1;
+                    // autoplay=1 hanya untuk reel pertama saat load awal
+                    const isFirstReel = isNew && reelIdx === 0;
                     const embedUrl = `https://www.youtube.com/embed/${reel.videoKey}?enablejsapi=1&autoplay=${isFirstReel?1:0}&rel=0&modestbranding=1&showinfo=0&playsinline=1&iv_load_policy=3&mute=0&controls=0&origin=${encodeURIComponent(location.origin || location.href.split('/').slice(0,3).join('/'))}`;
                     const typeLabel = reel.type === 'movie' ? 'Movie' : 'Series';
                     const ratingStr = reel.rating ? `· ★${reel.rating}` : '';
