@@ -1015,22 +1015,34 @@
         #tvLiveSportPane {
             display: none;
             position: fixed;
-            top: 54px; left: 0; right: 0;
-            bottom: 64px; /* di atas nav bawah */
+            top: 108px; /* topbar 54px + tabbar 54px */
+            left: 0; right: 0;
+            bottom: 64px;
             background: #000;
         }
         #tvLiveSportPane iframe {
             width: 100%; height: 100%; border: none; display: block;
         }
-        /* Channel panes */
+        /* Channel pane wrapper */
         #tvChannelPane {
             display: none;
-            padding-bottom: 80px;
         }
-        #tvChannelPane.active-tv-pane { display: block; } 
-            overflow: hidden; background: #000; 
-            aspect-ratio: 16/9; 
-            position: relative;
+        /* Sticky video player */
+        #tvPlayerArea {
+            display: none;
+            position: sticky;
+            top: 108px; /* topbar + tabbar */
+            z-index: 150;
+            background: #000;
+            width: 100%;
+            aspect-ratio: 16/9;
+        }
+        #tvPlayerArea iframe {
+            width: 100%; height: 100%; border: none; display: block;
+        }
+        /* Channel list scrolls independently below player */
+        #tvChannelList {
+            padding-bottom: 80px;
         }
         .tv-mode .carousel-slide { 
             overflow: hidden; position: relative; 
@@ -2697,7 +2709,7 @@
 
         <!-- LiveSport full embed pane -->
         <div id="tvLiveSportPane">
-            <iframe src="https://tv.filmu.in/en/sports" allowfullscreen allow="autoplay; encrypted-media" scrolling="no"></iframe>
+            <iframe src="https://tv.filmu.in/en/sports#main" allowfullscreen allow="autoplay; encrypted-media; fullscreen" scrolling="no" referrerpolicy="no-referrer"></iframe>
         </div>
 
         <!-- Search box (hanya untuk tab channel) -->
@@ -2709,11 +2721,11 @@
 
         <!-- Channel pane (Nasional / Lokal / Berita) -->
         <div id="tvChannelPane">
-            <!-- video player area -->
-            <div id="tvPlayerArea" style="display:none;background:#000;width:100%;aspect-ratio:16/9;position:relative">
-                <iframe id="tvPlayerFrame" src="" allowfullscreen allow="autoplay; encrypted-media" style="width:100%;height:100%;border:none"></iframe>
+            <!-- sticky video player -->
+            <div id="tvPlayerArea">
+                <iframe id="tvPlayerFrame" src="" allowfullscreen allow="autoplay; encrypted-media"></iframe>
             </div>
-            <!-- channel list -->
+            <!-- scrollable channel list -->
             <div id="tvChannelList"></div>
         </div>
 
@@ -3504,11 +3516,10 @@
             return nowBarHTML + schedHTML;
         }
 
-        let _currentTvTab = 'sport'; // default tab
+        let _currentTvTab = 'sport';
 
         function switchTvTab(tab) {
             _currentTvTab = tab;
-            // update tab indicator
             document.querySelectorAll('.tv-tab-item').forEach(t => t.classList.remove('active-tv-tab'));
             document.getElementById('tvTab' + tab.charAt(0).toUpperCase() + tab.slice(1)).classList.add('active-tv-tab');
 
@@ -3522,7 +3533,6 @@
                 channelPane.style.display = 'none';
                 searchIcon.style.display = 'none';
                 tvTitle.textContent = 'Live Sport';
-                // tutup search jika terbuka
                 document.getElementById('tvSearchBox').style.display = 'none';
             } else {
                 sportPane.style.display = 'none';
@@ -3531,6 +3541,13 @@
                 const labels = { nasional: 'Nasional', lokal: 'Lokal & Regional', berita: 'Berita' };
                 tvTitle.textContent = labels[tab] || 'Live TV';
                 renderTvList('', tab);
+                // auto-play channel pertama di tab ini
+                const tabMap = { nasional: 'Nasional', lokal: 'Lokal & Regional', berita: 'Berita' };
+                const cat = tvCategories.find(c => c.label === tabMap[tab]);
+                if (cat && cat.channels.length > 0) {
+                    const first = cat.channels[0];
+                    playTvChannelInPane(first.name, first.url);
+                }
             }
         }
 
@@ -3561,17 +3578,18 @@
         }
 
         function playTvChannelInPane(name, url) {
-            // update active card
+            // highlight active channel card
             document.querySelectorAll('.tv-ch-card').forEach(c => c.classList.remove('active-ch'));
             const card = document.getElementById('tvch-' + name.replace(/\s/g,'_'));
-            if (card) card.classList.add('active-ch');
-            // tampilkan player, load url
+            if (card) {
+                card.classList.add('active-ch');
+                card.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+            }
+            // load player — sticky di atas, tidak perlu scroll
             const playerArea = document.getElementById('tvPlayerArea');
             const frame = document.getElementById('tvPlayerFrame');
             playerArea.style.display = 'block';
             frame.src = url;
-            // scroll ke player
-            playerArea.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
 
         function initTvChannels() { /* channels di-render saat switchTvTab dipanggil */ }
