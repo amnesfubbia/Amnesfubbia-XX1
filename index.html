@@ -2798,23 +2798,6 @@
         </div>
 
         <!-- Bottom nav khusus TV -->
-        <nav class="tv-bottom-nav">
-            <div class="tv-bottom-item" onclick="closeTvModal(); updateActiveNav(document.getElementById('homeBtnNav')); backToHome()">
-                <i class="fa-solid fa-house cursor-pointer"></i>
-            </div>
-            <div class="tv-bottom-item tv-bottom-search" onclick="closeTvModal(); openSearch()">
-                <i class="fa-solid fa-magnifying-glass cursor-pointer"></i>
-            </div>
-            <div class="tv-bottom-item" onclick="closeTvModal(); updateActiveNav(document.getElementById('reelsBtnNav')); openReels()">
-                <i class="fa-solid fa-clapperboard cursor-pointer"></i>
-            </div>
-            <div class="tv-bottom-item tv-bottom-active">
-                <i class="fa-solid fa-tv cursor-pointer"></i>
-            </div>
-            <div class="tv-bottom-item" onclick="closeTvModal(); updateActiveNav(document.getElementById('homeBtnNav')); switchTab('bookmarks', document.getElementById('tabBookmark'))">
-                <i class="fa-regular fa-bookmark cursor-pointer"></i>
-            </div>
-        </nav>
     </div>
 
 
@@ -2838,23 +2821,6 @@
     </div>
 
     <!-- Bottom nav reels — terpisah dari reelsModal agar tidak tertutup overlay -->
-    <nav class="reels-bottom-nav" id="reelsBottomNav" style="display:none">
-        <div class="reels-bottom-item" onclick="closeReelDetail(); closeReels(); updateActiveNav(document.getElementById('homeBtnNav')); backToHome()">
-            <i class="fa-solid fa-house"></i>
-        </div>
-        <div class="reels-bottom-item" onclick="closeReelDetail(); closeReels(); openSearch()">
-            <i class="fa-solid fa-magnifying-glass"></i>
-        </div>
-        <div class="reels-bottom-item active-reel-nav">
-            <i class="fa-solid fa-clapperboard"></i>
-        </div>
-        <div class="reels-bottom-item" onclick="closeReelDetail(); closeReels(); updateActiveNav(document.getElementById('tvBtnNav')); openTvModal()">
-            <i class="fa-solid fa-tv"></i>
-        </div>
-        <div class="reels-bottom-item" onclick="openBookmarksFromReels()">
-            <i class="fa-regular fa-bookmark"></i>
-        </div>
-    </nav>
 
     <!-- ===== REEL DETAIL BOTTOM SHEET ===== -->
     <div id="reelDetailOverlay" onclick="closeReelDetail()"></div>
@@ -2945,12 +2911,18 @@
     </div>
 
 
-    <nav class="bottom-nav">
-        <i class="fa-solid fa-house cursor-pointer text-xl active-nav" id="homeBtnNav" onclick="closeActorPhotos(); updateActiveNav(this); backToHome()"></i>
-        <i class="fa-solid fa-magnifying-glass cursor-pointer text-xl" id="searchBtnNav" onclick="closeActorPhotos(); updateActiveNav(this); openSearch()"></i>
-        <i class="fa-solid fa-clapperboard cursor-pointer text-xl" id="reelsBtnNav" onclick="closeActorPhotos(); updateActiveNav(this); openReels()"></i>
-        <i class="fa-solid fa-tv cursor-pointer text-xl" id="tvBtnNav" onclick="closeActorPhotos(); updateActiveNav(this); openTvModal()"></i>
-        <i class="fa-solid fa-music cursor-pointer text-xl" id="musicBtnNav" onclick="closeActorPhotos(); updateActiveNav(this); window.open('https://monochrome.tf/','_blank')"></i>
+    <!-- ===== UNIVERSAL BOTTOM NAV ===== -->
+    <nav class="bottom-nav" id="globalBottomNav">
+        <i class="fa-solid fa-house cursor-pointer text-xl active-nav" id="homeBtnNav"
+           onclick="closeActorPhotos(); _navAction('home')"></i>
+        <i class="fa-solid fa-magnifying-glass cursor-pointer text-xl" id="searchBtnNav"
+           onclick="closeActorPhotos(); _navAction('search')"></i>
+        <i class="fa-solid fa-clapperboard cursor-pointer text-xl" id="reelsBtnNav"
+           onclick="closeActorPhotos(); _navAction('reels')"></i>
+        <i class="fa-solid fa-tv cursor-pointer text-xl" id="tvBtnNav"
+           onclick="closeActorPhotos(); _navAction('tv')"></i>
+        <i class="fa-solid fa-music cursor-pointer text-xl" id="musicBtnNav"
+           onclick="_navAction('music')"></i>
     </nav>
 
     <script>
@@ -3000,6 +2972,25 @@
 
         // Video controls modal film
         let _modalPlaying = true;
+        // ===== UNIVERSAL NAV ACTION =====
+        function _navAction(target) {
+            // Tutup semua modal yang mungkin terbuka
+            try { if(document.getElementById('tvModal').style.display==='block'){ document.getElementById('tvPlayerFrame').src=''; document.getElementById('tvModal').style.display='none'; document.body.style.overflow='auto'; }} catch(e){}
+            try { if(document.getElementById('reelsModal')&&document.getElementById('reelsModal').style.display==='block') _closeReelsSilent(); } catch(e){}
+            try { if(document.getElementById('movieModal').style.display==='block') _closeModalSilent(); } catch(e){}
+            try { if(document.getElementById('actorModal').classList.contains('open')) _closeActorModalSilent(); } catch(e){}
+            try { if(document.getElementById('searchOverlay').style.display==='block') _closeSearchSilent(); } catch(e){}
+            try { closeReelDetail && closeReelDetail(); } catch(e){}
+
+            switch(target) {
+                case 'home':   updateActiveNav(document.getElementById('homeBtnNav'));   backToHome();    break;
+                case 'search': updateActiveNav(document.getElementById('searchBtnNav')); openSearch();    break;
+                case 'reels':  updateActiveNav(document.getElementById('reelsBtnNav'));  openReels();     break;
+                case 'tv':     updateActiveNav(document.getElementById('tvBtnNav'));     openTvModal();   break;
+                case 'music':  window.open('https://monochrome.tf/','_blank');           break;
+            }
+        }
+
         let _modalMuted = false;
         function modalVideoCmd(cmd) {
             const slides = document.querySelectorAll('.carousel-slide');
@@ -5402,19 +5393,10 @@
         function updateActiveNav(el) {
             document.querySelectorAll('.bottom-nav i').forEach(i => {
                 i.classList.remove('active-nav');
-                // Bookmark: outline saat tidak aktif, solid saat aktif
-                if (i.id === 'musicBtnNav') {
-                    i.className = i.className.replace('fa-solid', 'fa-regular').replace('active-nav', '');
-                    i.classList.add('fa-regular', 'fa-bookmark', 'cursor-pointer', 'text-xl');
-                }
+                // Music button: selalu solid, tidak perlu toggle outline/solid
             });
             if (el) {
                 el.classList.add('active-nav');
-                // Jika bookmark aktif, ganti ke solid
-                if (el.id === 'musicBtnNav') {
-                    el.classList.remove('fa-regular');
-                    el.classList.add('fa-solid');
-                }
             }
             // Tutup movieografi + actor modal jika nav bawah diklik (loncat langsung)
             const mvg = document.getElementById('movieografiModal');
