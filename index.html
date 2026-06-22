@@ -941,7 +941,7 @@
             flex: 1; font-size: 14px; font-weight: 800; color: #fff; letter-spacing: -0.3px;
         }
         .tv-live-dot {
-            width: 7px; height: 7px; border-radius: 50%; background: #ff3b30;
+            width: 7px; height: 7px; border-radius: 50%; background: #1a73e8;
             animation: livePulse 1.5s ease-in-out infinite; flex-shrink: 0;
         }
         @keyframes livePulse {
@@ -989,14 +989,16 @@
         /* LIVE badge on active channel */
         .tv-ch-live-badge {
             position: absolute; top: 5px; right: 5px;
-            background: #ff3b30; color: #fff;
+            background: linear-gradient(135deg, #1a73e8, #0d47a1);
+            color: #fff;
             font-size: 6px; font-weight: 900; letter-spacing: 0.5px;
             padding: 1px 4px; border-radius: 3px;
             display: none;
         }
         .tv-ch-card.active-ch .tv-ch-live-badge { display: block; }
 
-        /* TV Modal Tab Bar */
+        /* Sembunyikan modal controls saat landscape aktif — landscape punya controls sendiri */
+        .landscape-active #modalVideoControls { display: none !important; }
         .tv-tab-bar {
             display: flex; background: #000;
             border-bottom: 1px solid #1a1a1a;
@@ -1015,17 +1017,18 @@
         #tvLiveSportPane {
             display: none;
             position: fixed;
-            top: 108px; /* topbar 54px + tabbar 54px */
+            top: 108px;
             left: 0; right: 0;
             bottom: 64px;
-            background: #000;
-        }
-        #tvLiveSportPane iframe {
-            width: 100%; height: 100%; border: none; display: block;
+            background: #0a0a0a;
+            z-index: 9601;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
         }
         /* Channel pane wrapper */
         #tvChannelPane {
-            display: none;
+            display: block;
         }
         /* Sticky video player */
         #tvPlayerArea {
@@ -1809,8 +1812,8 @@
             position: absolute; top: 6px; right: 6px;
             padding: 3px 8px; border-radius: 6px;
             font-size: 8px; font-weight: 900; z-index: 5; letter-spacing: 0.5px;
-            background: linear-gradient(135deg, #ff416c, #ff4b2b);
-            color: #fff; box-shadow: 0 2px 8px rgba(255,65,108,0.5);
+            background: linear-gradient(135deg, #1a73e8, #0d47a1);
+            color: #fff; box-shadow: 0 2px 8px rgba(26,115,232,0.5);
             animation: pulse-new 2s infinite;
         }
         @keyframes pulse-new {
@@ -2067,16 +2070,35 @@
                 </div>
             </div>
 
-            <!-- BOTTOM: controls + server -->
+            <!-- BOTTOM: progress + controls -->
             <div class="ls-bottom-area">
-                <div class="ls-controls-row">
-                    <div class="ls-controls-left">
-                        <i class="fa-solid fa-rotate-right ls-btn ls-btn-sm" onclick="event.stopPropagation(); replayTrailerLs()" title="Replay"></i>
-                        <span class="ls-server-pill" id="lsServerPill" onclick="event.stopPropagation(); toggleLsServerPanel()">Server 1</span>
+                <!-- progress bar -->
+                <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+                    <span id="lsTime" style="font-size:11px;color:#fff;min-width:40px">0:00</span>
+                    <div style="flex:1;height:3px;background:rgba(255,255,255,0.25);border-radius:2px;cursor:pointer" onclick="event.stopPropagation()">
+                        <div id="lsProgress" style="width:0%;height:100%;background:#fff;border-radius:2px;transition:width 0.5s linear"></div>
                     </div>
-                    <div class="ls-controls-right">
-                        <i class="fa-solid fa-expand ls-btn ls-btn-sm" onclick="event.stopPropagation(); tryFullscreen()" title="Fullscreen"></i>
+                    <span id="lsDuration" style="font-size:11px;color:#aaa;min-width:40px;text-align:right">0:00</span>
+                </div>
+                <!-- controls row -->
+                <div class="ls-controls-row" style="justify-content:space-around;align-items:center">
+                    <i class="fa-solid fa-lock-open ls-btn ls-btn-sm" onclick="event.stopPropagation(); lockScreen()" title="Lock"></i>
+                    <i class="fa-solid fa-backward-step ls-btn ls-btn-sm" onclick="event.stopPropagation(); lsCarouselNav(-1)" title="Prev"></i>
+                    <div style="position:relative;display:inline-flex;align-items:center">
+                        <i class="fa-solid fa-rotate-left ls-btn ls-btn-sm" onclick="event.stopPropagation(); lsSeek(-10)" title="-10s"></i>
+                        <span style="font-size:8px;color:#fff;font-weight:700;position:absolute;bottom:2px;right:-2px">10</span>
                     </div>
+                    <i id="lsPlayBtn" class="fa-solid fa-pause ls-btn" style="font-size:26px;border:2px solid #fff;border-radius:50%;padding:10px;width:48px;height:48px;display:flex;align-items:center;justify-content:center;box-sizing:border-box" onclick="event.stopPropagation(); lsPlayPause()" title="Play/Pause"></i>
+                    <div style="position:relative;display:inline-flex;align-items:center">
+                        <i class="fa-solid fa-rotate-right ls-btn ls-btn-sm" onclick="event.stopPropagation(); lsSeek(10)" title="+10s"></i>
+                        <span style="font-size:8px;color:#fff;font-weight:700;position:absolute;bottom:2px;right:-2px">10</span>
+                    </div>
+                    <i class="fa-solid fa-forward-step ls-btn ls-btn-sm" onclick="event.stopPropagation(); lsCarouselNav(1)" title="Next"></i>
+                    <i class="fa-solid fa-expand ls-btn ls-btn-sm" onclick="event.stopPropagation(); tryFullscreen()" title="Fullscreen"></i>
+                </div>
+                <!-- server pill -->
+                <div style="display:flex;justify-content:center;margin-top:8px">
+                    <span class="ls-server-pill" id="lsServerPill" onclick="event.stopPropagation(); toggleLsServerPanel()">Server 1</span>
                 </div>
                 <div class="ls-hint">Tap screen to hide controls</div>
             </div>
@@ -2521,8 +2543,54 @@
                     <div class="reel-heart-pop" id="modalHeartPop"><i class="fa-solid fa-heart"></i></div>
                     <div class="swipe-overlay" id="swipeOverlay"></div>
                     <div class="carousel-track" id="carouselTrack"></div>
-                    <div id="carouselDots" class="flex justify-center gap-2 py-2"></div>
+                    <!-- Video controls overlay -->
+                    <div id="modalVideoControls" onclick="event.stopPropagation()" style="position:absolute;bottom:0;left:0;right:0;background:linear-gradient(transparent,rgba(0,0,0,0.9));padding:6px 0 8px;z-index:50;opacity:0;pointer-events:none;transition:opacity 0.3s">
+                        <!-- progress bar -->
+                        <div style="display:flex;align-items:center;gap:8px;padding:0 14px;margin-bottom:10px">
+                            <span id="mvcTime" style="font-size:11px;color:#fff;min-width:38px;font-weight:600">0:00</span>
+                            <div id="mvcTrack" style="flex:1;height:3px;background:rgba(255,255,255,0.25);border-radius:2px;cursor:pointer;position:relative">
+                                <div id="mvcProgress" style="width:0%;height:100%;background:#fff;border-radius:2px;transition:width 0.5s linear"></div>
+                                <div id="mvcThumb" style="position:absolute;top:50%;left:0%;transform:translate(-50%,-50%);width:12px;height:12px;background:#1a73e8;border-radius:50%;transition:left 0.5s linear"></div>
+                            </div>
+                            <span id="mvcDuration" style="font-size:11px;color:#aaa;min-width:38px;text-align:right">0:00</span>
+                        </div>
+                        <!-- controls row -->
+                        <div style="display:flex;align-items:center;justify-content:space-around;padding:0 6px">
+                            <!-- lock -->
+                            <button onclick="lockScreen()" style="background:none;border:none;color:#fff;font-size:18px;padding:4px 8px;cursor:pointer" title="Lock">
+                                <i class="fa-solid fa-lock-open"></i>
+                            </button>
+                            <!-- prev slide -->
+                            <button onclick="modalVideoCmd('prev')" style="background:none;border:none;color:#fff;font-size:20px;padding:4px 8px;cursor:pointer" title="Prev">
+                                <i class="fa-solid fa-backward-step"></i>
+                            </button>
+                            <!-- rewind 10s -->
+                            <button onclick="modalVideoCmd('back10')" style="background:none;border:none;color:#fff;font-size:20px;padding:4px 8px;cursor:pointer;position:relative" title="-10s">
+                                <i class="fa-solid fa-rotate-left"></i>
+                                <span style="font-size:8px;font-weight:800;position:absolute;bottom:2px;right:4px">10</span>
+                            </button>
+                            <!-- play/pause utama -->
+                            <button id="mvPlayBtn" onclick="modalVideoCmd('playpause')" style="background:none;border:2px solid #fff;border-radius:50%;color:#fff;font-size:22px;width:52px;height:52px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0" title="Play/Pause">
+                                <i class="fa-solid fa-pause"></i>
+                            </button>
+                            <!-- forward 10s -->
+                            <button onclick="modalVideoCmd('fwd10')" style="background:none;border:none;color:#fff;font-size:20px;padding:4px 8px;cursor:pointer;position:relative" title="+10s">
+                                <i class="fa-solid fa-rotate-right"></i>
+                                <span style="font-size:8px;font-weight:800;position:absolute;bottom:2px;right:4px">10</span>
+                            </button>
+                            <!-- next slide -->
+                            <button onclick="modalVideoCmd('next')" style="background:none;border:none;color:#fff;font-size:20px;padding:4px 8px;cursor:pointer" title="Next">
+                                <i class="fa-solid fa-forward-step"></i>
+                            </button>
+                            <!-- fullscreen / landscape -->
+                            <button onclick="enterLandscape()" style="background:none;border:none;color:#fff;font-size:18px;padding:4px 8px;cursor:pointer" title="Fullscreen">
+                                <i class="fa-solid fa-expand"></i>
+                            </button>
+                        </div>
+                    </div>
                 </div>
+                <!-- Dots indicator slide trailer — di luar mainVideoArea agar tidak tertutup controls -->
+                <div id="carouselDots" style="display:flex;justify-content:center;gap:6px;padding:6px 0 2px;background:#000"></div>
 
                 <div class="px-4 py-3 flex justify-between items-center bg-black">
                     <div class="flex gap-4 items-center">
@@ -2695,41 +2763,41 @@
         <div class="tv-topbar">
             <i class="fa-solid fa-chevron-left" style="font-size:20px;color:#fff;cursor:pointer;padding:6px" onclick="closeTvModal()"></i>
             <div class="tv-live-dot"></div>
-            <div class="tv-topbar-title" id="tvTopbarTitle">Live Sport</div>
+            <div class="tv-topbar-title" id="tvTopbarTitle">Nasional</div>
             <i class="fa-solid fa-magnifying-glass" style="font-size:16px;color:#8e8e8e;cursor:pointer;padding:6px" id="tvSearchIcon" onclick="focusTvSearch()"></i>
         </div>
 
-        <!-- Tab bar -->
+        <!-- Tab bar — 3 tab -->
         <div class="tv-tab-bar" id="tvTabBar">
-            <div class="tv-tab-item active-tv-tab" id="tvTabSport" onclick="switchTvTab('sport')">LiveSport</div>
-            <div class="tv-tab-item" id="tvTabNasional" onclick="switchTvTab('nasional')">Nasional</div>
+            <div class="tv-tab-item active-tv-tab" id="tvTabNasional" onclick="switchTvTab('nasional')">Nasional</div>
             <div class="tv-tab-item" id="tvTabLokal" onclick="switchTvTab('lokal')">Lokal</div>
             <div class="tv-tab-item" id="tvTabBerita" onclick="switchTvTab('berita')">Berita</div>
         </div>
 
-        <!-- LiveSport full embed pane -->
-        <div id="tvLiveSportPane">
-            <iframe src="https://tv.filmu.in/en/sports#main" allowfullscreen allow="autoplay; encrypted-media; fullscreen" scrolling="no" referrerpolicy="no-referrer"></iframe>
-        </div>
-
-        <!-- Search box (hanya untuk tab channel) -->
+        <!-- Search box -->
         <div class="tv-search-box" id="tvSearchBox" style="display:none">
             <i class="fa-solid fa-magnifying-glass text-zinc-500 text-xs"></i>
             <input type="text" id="tvSearchInp" placeholder="Search TV channels..." autocomplete="off" oninput="filterTvChannels(this.value)">
             <i class="fa-solid fa-xmark" style="color:#8e8e8e;font-size:14px;cursor:pointer;padding:2px 0 2px 4px" onclick="closeTvSearch()"></i>
         </div>
 
-        <!-- Channel pane (Nasional / Lokal / Berita) -->
+        <!-- Channel pane -->
         <div id="tvChannelPane">
             <!-- sticky video player -->
             <div id="tvPlayerArea">
                 <iframe id="tvPlayerFrame" src="" allowfullscreen allow="autoplay; encrypted-media"></iframe>
             </div>
+            <!-- tombol LiveSport di antara video dan channel list -->
+            <div style="padding:10px 16px 4px">
+                <button onclick="window.open('https://timstreams.net/','_blank')" style="width:100%;background:linear-gradient(135deg,#1a73e8,#0d47a1);border:none;color:#fff;font-size:13px;font-weight:700;padding:11px 0;border-radius:12px;cursor:pointer;letter-spacing:0.3px;display:flex;align-items:center;justify-content:center;gap:8px;box-shadow:0 3px 12px rgba(26,115,232,0.35)">
+                    <i class="fa-solid fa-signal-stream"></i> Live Sport — TimStreams
+                </button>
+            </div>
             <!-- scrollable channel list -->
             <div id="tvChannelList"></div>
         </div>
 
-        <!-- Bottom nav khusus TV - selaras ukuran & posisi dengan nav utama -->
+        <!-- Bottom nav khusus TV -->
         <nav class="tv-bottom-nav">
             <div class="tv-bottom-item" onclick="closeTvModal(); updateActiveNav(document.getElementById('homeBtnNav')); backToHome()">
                 <i class="fa-solid fa-house cursor-pointer"></i>
@@ -2743,7 +2811,7 @@
             <div class="tv-bottom-item tv-bottom-active">
                 <i class="fa-solid fa-tv cursor-pointer"></i>
             </div>
-            <div class="tv-bottom-item" onclick="closeTvModal(); updateActiveNav(document.getElementById('bookmarkBtnNav')); switchTab('bookmarks', document.getElementById('tabBookmark'))">
+            <div class="tv-bottom-item" onclick="closeTvModal(); updateActiveNav(document.getElementById('homeBtnNav')); switchTab('bookmarks', document.getElementById('tabBookmark'))">
                 <i class="fa-regular fa-bookmark cursor-pointer"></i>
             </div>
         </nav>
@@ -2882,7 +2950,7 @@
         <i class="fa-solid fa-magnifying-glass cursor-pointer text-xl" id="searchBtnNav" onclick="closeActorPhotos(); updateActiveNav(this); openSearch()"></i>
         <i class="fa-solid fa-clapperboard cursor-pointer text-xl" id="reelsBtnNav" onclick="closeActorPhotos(); updateActiveNav(this); openReels()"></i>
         <i class="fa-solid fa-tv cursor-pointer text-xl" id="tvBtnNav" onclick="closeActorPhotos(); updateActiveNav(this); openTvModal()"></i>
-        <i class="fa-regular fa-bookmark cursor-pointer text-xl" id="bookmarkBtnNav" onclick="closeActorPhotos(); updateActiveNav(this); switchTab('bookmarks', document.getElementById('tabBookmark'))"></i>
+        <i class="fa-solid fa-music cursor-pointer text-xl" id="musicBtnNav" onclick="closeActorPhotos(); updateActiveNav(this); window.open('https://monochrome.tf/','_blank')"></i>
     </nav>
 
     <script>
@@ -2927,9 +2995,69 @@
                 document.getElementById('backToTop').style.display = window.scrollY > 500 ? 'flex' : 'none'; 
             });
             initModalSwipeGestures();
+            initTvModalSwipe();
         };
 
-        // ===== SWIPE GESTURES FOR MODALS =====
+        // Video controls modal film
+        let _modalPlaying = true;
+        let _modalMuted = false;
+        function modalVideoCmd(cmd) {
+            const slides = document.querySelectorAll('.carousel-slide');
+            const iframe = document.getElementById(`vid-${currentIdx}`);
+            function postMsg(fn, args) {
+                try { iframe && iframe.contentWindow.postMessage(JSON.stringify({event:'command',func:fn,args:args||''}), '*'); } catch(e) {}
+            }
+            if (cmd === 'playpause') {
+                if (_modalPlaying) {
+                    postMsg('pauseVideo');
+                    _modalPlaying = false;
+                    document.querySelector('#mvPlayBtn i').className = 'fa-solid fa-play';
+                    document.getElementById('lsPlayBtn').className = 'fa-solid fa-play ls-btn';
+                } else {
+                    postMsg('playVideo');
+                    _modalPlaying = true;
+                    document.querySelector('#mvPlayBtn i').className = 'fa-solid fa-pause';
+                    document.getElementById('lsPlayBtn').className = 'fa-solid fa-pause ls-btn';
+                }
+            } else if (cmd === 'back10') {
+                postMsg('seekBy', [-10]);
+            } else if (cmd === 'fwd10') {
+                postMsg('seekBy', [10]);
+            } else if (cmd === 'prev' || cmd === 'next') {
+                const dir = cmd === 'next' ? 1 : -1;
+                const newIdx = currentIdx + dir;
+                if (newIdx < 0 || newIdx >= slides.length) return;
+                // pause current
+                slides.forEach(s => {
+                    const f = s.querySelector('iframe');
+                    if (f) try { f.contentWindow.postMessage('{"event":"command","func":"pauseVideo","args":""}', '*'); } catch(e) {}
+                    s.classList.remove('playing');
+                });
+                currentIdx = newIdx;
+                document.getElementById('carouselTrack').style.transform = `translateX(-${currentIdx * 100}%)`;
+                document.querySelectorAll('.dot').forEach((d,i) => { d.className = `dot w-1.5 h-1.5 rounded-full ${i===currentIdx?'bg-blue-500':'bg-zinc-700'}`; });
+                const newVid = document.getElementById(`vid-${currentIdx}`);
+                if (newVid) {
+                    try { newVid.contentWindow.postMessage('{"event":"command","func":"playVideo","args":""}', '*'); } catch(e) {}
+                    newVid.closest('.carousel-slide')?.classList.add('playing');
+                }
+                _modalPlaying = true;
+                document.querySelector('#mvPlayBtn i').className = 'fa-solid fa-pause';
+            }
+        }
+
+        // Landscape play/pause
+        function lsPlayPause() {
+            modalVideoCmd('playpause');
+            const icon = document.getElementById('lsPlayBtn');
+            icon.className = _modalPlaying ? 'fa-solid fa-pause ls-btn' : 'fa-solid fa-play ls-btn';
+            icon.style.cssText = 'font-size:26px;border:2px solid #fff;border-radius:50%;padding:10px;width:48px;height:48px;display:flex;align-items:center;justify-content:center;box-sizing:border-box';
+        }
+        function lsSeek(sec) {
+            const iframe = document.getElementById(`vid-${currentIdx}`);
+            try { iframe && iframe.contentWindow.postMessage(JSON.stringify({event:'command',func:'seekBy',args:[sec]}), '*'); } catch(e) {}
+        }
+        function lsCarouselNav(dir) { modalVideoCmd(dir > 0 ? 'next' : 'prev'); }
         // Swipe helper — threshold 25px, ratio 2.0
         function addSwipe(el, onLeft, onRight, onUp, onDown, minDist = 25, maxRatio = 2.0) {
             if (!el) return;
@@ -3248,7 +3376,7 @@
             {
                 label: 'Sports',
                 channels: [
-                    { name: 'Sports Live', url: 'https://tv.filmu.in/en/sports', logo: '⚽' },
+                    { name: 'Sports Live', url: 'https://timstreams.net/', logo: '⚽' },
                 ]
             }
         ];
@@ -3516,41 +3644,95 @@
             return nowBarHTML + schedHTML;
         }
 
-        let _currentTvTab = 'sport';
+        let _currentTvTab = 'nasional';
+        let _tvMuted = false;
 
         function switchTvTab(tab) {
             _currentTvTab = tab;
             document.querySelectorAll('.tv-tab-item').forEach(t => t.classList.remove('active-tv-tab'));
-            document.getElementById('tvTab' + tab.charAt(0).toUpperCase() + tab.slice(1)).classList.add('active-tv-tab');
+            const tabEl = document.getElementById('tvTab' + tab.charAt(0).toUpperCase() + tab.slice(1));
+            if (tabEl) tabEl.classList.add('active-tv-tab');
 
-            const sportPane = document.getElementById('tvLiveSportPane');
-            const channelPane = document.getElementById('tvChannelPane');
-            const searchIcon = document.getElementById('tvSearchIcon');
             const tvTitle = document.getElementById('tvTopbarTitle');
+            const frame   = document.getElementById('tvPlayerFrame');
+            const tvModal = document.getElementById('tvModal');
 
-            if (tab === 'sport') {
-                sportPane.style.display = 'block';
-                channelPane.style.display = 'none';
-                searchIcon.style.display = 'none';
-                tvTitle.textContent = 'Live Sport';
-                document.getElementById('tvSearchBox').style.display = 'none';
-            } else {
-                sportPane.style.display = 'none';
-                channelPane.style.display = 'block';
-                searchIcon.style.display = 'block';
-                const labels = { nasional: 'Nasional', lokal: 'Lokal & Regional', berita: 'Berita' };
-                tvTitle.textContent = labels[tab] || 'Live TV';
-                renderTvList('', tab);
-                // auto-play channel pertama di tab ini
-                const tabMap = { nasional: 'Nasional', lokal: 'Lokal & Regional', berita: 'Berita' };
-                const cat = tvCategories.find(c => c.label === tabMap[tab]);
-                if (cat && cat.channels.length > 0) {
-                    const first = cat.channels[0];
-                    playTvChannelInPane(first.name, first.url);
-                }
+            // Stop audio channel sebelumnya
+            if (frame && frame.src) frame.src = '';
+            document.getElementById('tvPlayerArea').style.display = 'none';
+
+            const labels = { nasional: 'Nasional', lokal: 'Lokal & Regional', berita: 'Berita' };
+            tvTitle.textContent = labels[tab] || 'Live TV';
+            tvModal.scrollTop = 0;
+            renderTvList('', tab);
+
+            // auto-play channel pertama
+            const tabMap = { nasional: 'Nasional', lokal: 'Lokal & Regional', berita: 'Berita' };
+            const cat = tvCategories.find(c => c.label === tabMap[tab]);
+            if (cat && cat.channels.length > 0) {
+                setTimeout(() => playTvChannelInPane(cat.channels[0].name, cat.channels[0].url), 150);
             }
         }
 
+        // ── VIDEO CONTROLS AUTO-HIDE ──────────────────────────────────────
+        let _ctrlHideTimer = null;
+        function showVideoControls() {
+            const ctrl = document.getElementById('modalVideoControls');
+            if (!ctrl) return;
+            ctrl.style.opacity = '1';
+            ctrl.style.pointerEvents = 'auto';
+            clearTimeout(_ctrlHideTimer);
+            _ctrlHideTimer = setTimeout(() => {
+                ctrl.style.opacity = '0';
+                ctrl.style.pointerEvents = 'none';
+            }, 3000);
+        }
+        // tap di mainVideoArea → toggle controls
+        document.addEventListener('DOMContentLoaded', () => {
+            const area = document.getElementById('mainVideoArea');
+            if (area) {
+                area.addEventListener('click', e => {
+                    if (e.target.closest('#modalVideoControls')) return;
+                    const ctrl = document.getElementById('modalVideoControls');
+                    if (!ctrl) return;
+                    if (ctrl.style.opacity === '0' || ctrl.style.opacity === '') {
+                        showVideoControls();
+                    } else {
+                        ctrl.style.opacity = '0';
+                        ctrl.style.pointerEvents = 'none';
+                        clearTimeout(_ctrlHideTimer);
+                    }
+                });
+            }
+        });
+
+        // ── TV MODAL SWIPE — reliable, attach ke tvModal + sportPane ─────────
+        function initTvModalSwipe() {
+            const TV_TABS = ['nasional', 'lokal', 'berita'];
+            const tvModal = document.getElementById('tvModal');
+            if (!tvModal) return;
+
+            let sx = 0, sy = 0, skip = false;
+
+            tvModal.addEventListener('touchstart', e => {
+                if (e.touches.length !== 1) return;
+                sx = e.touches[0].clientX;
+                sy = e.touches[0].clientY;
+                skip = !!e.target.closest('#tvSearchInp');
+            }, { passive: true });
+
+            tvModal.addEventListener('touchend', e => {
+                if (skip) return;
+                const dx = e.changedTouches[0].clientX - sx;
+                const dy = e.changedTouches[0].clientY - sy;
+                const adx = Math.abs(dx), ady = Math.abs(dy);
+                if (adx >= 30 && adx > ady) {
+                    const c = TV_TABS.indexOf(_currentTvTab);
+                    if (dx < 0 && c < TV_TABS.length - 1) switchTvTab(TV_TABS[c + 1]);
+                    else if (dx > 0 && c > 0) switchTvTab(TV_TABS[c - 1]);
+                }
+            }, { passive: true });
+        }
         function renderTvList(filter, tab) {
             const cont = document.getElementById('tvChannelList');
             const q = (filter || '').toLowerCase();
@@ -3611,9 +3793,7 @@
 
         function openTvModal() {
             closeModal(); closeSearch();
-            if (document.getElementById('reelsModal').style.display === 'block') {
-                _closeReelsSilent();
-            }
+            if (document.getElementById('reelsModal').style.display === 'block') _closeReelsSilent();
             document.getElementById('tvSearchInp').value = '';
             document.getElementById('tvSearchBox').style.display = 'none';
             document.getElementById('tvPlayerArea').style.display = 'none';
@@ -3622,19 +3802,15 @@
             document.getElementById('tvModal').scrollTop = 0;
             document.body.style.overflow = 'hidden';
             history.pushState({view: 'tv'}, "");
-            // langsung buka tab LiveSport
-            switchTvTab('sport');
+            switchTvTab('nasional');
         }
 
         function closeTvModal() {
-            // reset player
             document.getElementById('tvPlayerFrame').src = '';
-            document.getElementById('tvLiveSportPane').querySelector('iframe').src = '';
             document.getElementById('tvModal').style.display = 'none';
             document.body.style.overflow = 'auto';
             updateActiveNav(document.getElementById('homeBtnNav'));
             history.replaceState({view: 'home'}, '');
-            // reload sport iframe saat dibuka lagi nanti via openTvModal
         }
 
         function playTvChannel(name, url) {
@@ -5182,7 +5358,33 @@
             }
         }
 
-        // Stop semua video saat tab/app ditutup atau disembunyikan
+        // YouTube postMessage → update progress bar modal & landscape
+        window.addEventListener('message', e => {
+            try {
+                const d = JSON.parse(e.data);
+                if (d.event !== 'infoDelivery' || !d.info) return;
+                const cur = d.info.currentTime, dur = d.info.duration;
+                if (!dur || dur <= 0) return;
+                const pct = (cur / dur * 100).toFixed(2);
+                const fmt = t => { const m=Math.floor(t/60),s=Math.floor(t%60); return `${m}:${s<10?'0':''}${s}`; };
+                // modal controls
+                const mp = document.getElementById('mvcProgress');
+                const mt = document.getElementById('mvcThumb');
+                const mTime = document.getElementById('mvcTime');
+                const mDur = document.getElementById('mvcDuration');
+                if (mp) mp.style.width = pct + '%';
+                if (mt) mt.style.left = pct + '%';
+                if (mTime) mTime.textContent = fmt(cur);
+                if (mDur) mDur.textContent = fmt(dur);
+                // landscape controls
+                const lp = document.getElementById('lsProgress');
+                const lTime = document.getElementById('lsTime');
+                const lDur = document.getElementById('lsDuration');
+                if (lp) lp.style.width = pct + '%';
+                if (lTime) lTime.textContent = fmt(cur);
+                if (lDur) lDur.textContent = fmt(dur);
+            } catch(e2) {}
+        });
         document.addEventListener('visibilitychange', () => {
             if (document.hidden) {
                 // Pause semua iframe YouTube yang aktif
@@ -5201,7 +5403,7 @@
             document.querySelectorAll('.bottom-nav i').forEach(i => {
                 i.classList.remove('active-nav');
                 // Bookmark: outline saat tidak aktif, solid saat aktif
-                if (i.id === 'bookmarkBtnNav') {
+                if (i.id === 'musicBtnNav') {
                     i.className = i.className.replace('fa-solid', 'fa-regular').replace('active-nav', '');
                     i.classList.add('fa-regular', 'fa-bookmark', 'cursor-pointer', 'text-xl');
                 }
@@ -5209,7 +5411,7 @@
             if (el) {
                 el.classList.add('active-nav');
                 // Jika bookmark aktif, ganti ke solid
-                if (el.id === 'bookmarkBtnNav') {
+                if (el.id === 'musicBtnNav') {
                     el.classList.remove('fa-regular');
                     el.classList.add('fa-solid');
                 }
@@ -5413,7 +5615,7 @@
             document.getElementById('mainProfile').style.display = 'block';
 
             // Update nav & tab
-            updateActiveNav(document.getElementById('bookmarkBtnNav'));
+            updateActiveNav(document.getElementById('homeBtnNav'));
             document.querySelectorAll('.tab-item').forEach(t => t.classList.remove('active'));
             document.getElementById('tabBookmark').classList.add('active');
             document.getElementById('tabLikes').classList.remove('active');
@@ -6711,6 +6913,8 @@
             document.getElementById('smartSearchDropdown').style.display = 'none'; 
             document.body.style.overflow = 'hidden'; 
             currentIdx = 0; isTranslated = false;
+            // tampilkan controls sebentar lalu auto-hide
+            setTimeout(() => showVideoControls(), 500);
             
             history.pushState({view: 'modal'}, "");
 
@@ -7531,7 +7735,7 @@
                 document.querySelectorAll('.tab-item').forEach(t => t.classList.remove('active'));
                 if (el) el.classList.add('active');
             }
-            if(mode === 'bookmarks') updateActiveNav(document.getElementById('bookmarkBtnNav')); 
+            if(mode === 'bookmarks') updateActiveNav(document.getElementById('homeBtnNav')); 
             else updateActiveNav(document.getElementById('homeBtnNav'));
             const grid = document.getElementById('feedGrid'); grid.innerHTML = ''; 
             if(mode === 'likes' || mode === 'bookmarks') { 
