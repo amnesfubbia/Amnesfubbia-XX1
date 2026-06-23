@@ -1180,7 +1180,14 @@
         }
         .tv-switcher-name-new { font-size: 8px; font-weight: 700; color: #ccc; }
 
-        /* TV Modal bottom nav - selaras dengan bottom-nav utama */
+        /* Universal nav item */
+        .nav-item-wrap {
+            flex: 1; display: flex; align-items: center; justify-content: center;
+            cursor: pointer; padding: 8px 0; color: #555; transition: color 0.2s;
+        }
+        .nav-item-wrap.nav-active i, .nav-item-wrap:active i { color: #fff; }
+        .tv-bottom-nav .nav-item-wrap { color: #555; }
+        .tv-bottom-nav .nav-item-wrap.nav-active i { color: #fff; }
         .tv-bottom-nav {
             position: fixed; bottom: 0; left: 0; right: 0;
             background: #000; border-top: 1px solid #1c1c1c;
@@ -2798,6 +2805,7 @@
         </div>
 
         <!-- Bottom nav khusus TV -->
+        <nav class="tv-bottom-nav" id="tvBottomNav"></nav>
     </div>
 
 
@@ -2820,7 +2828,9 @@
         </div>
     </div>
 
-    <!-- Bottom nav reels — terpisah dari reelsModal agar tidak tertutup overlay -->
+    <nav class="reels-bottom-nav" id="reelsBottomNav" style="display:none">
+        <div id="reelsBottomNavInner" style="display:contents"></div>
+    </nav>
 
     <!-- ===== REEL DETAIL BOTTOM SHEET ===== -->
     <div id="reelDetailOverlay" onclick="closeReelDetail()"></div>
@@ -2895,9 +2905,10 @@
             <div class="notif-topbar-title">New Movies Today</div>
             <span class="notif-date-badge" id="notifDateBadge"></span>
         </div>
-        <div id="notifContent">
+        <div id="notifContent" style="padding-bottom:70px">
             <div class="notif-empty"><i class="fa-solid fa-film"></i>Loading...</div>
         </div>
+        <nav class="bottom-nav" id="notifBottomNav" style="position:fixed;bottom:0;left:0;right:0;z-index:10001"></nav>
     </div>
 
     <!-- ===== FOTO PEMERAN ===== -->
@@ -2912,18 +2923,7 @@
 
 
     <!-- ===== UNIVERSAL BOTTOM NAV ===== -->
-    <nav class="bottom-nav" id="globalBottomNav">
-        <i class="fa-solid fa-house cursor-pointer text-xl active-nav" id="homeBtnNav"
-           onclick="closeActorPhotos(); _navAction('home')"></i>
-        <i class="fa-solid fa-magnifying-glass cursor-pointer text-xl" id="searchBtnNav"
-           onclick="closeActorPhotos(); _navAction('search')"></i>
-        <i class="fa-solid fa-clapperboard cursor-pointer text-xl" id="reelsBtnNav"
-           onclick="closeActorPhotos(); _navAction('reels')"></i>
-        <i class="fa-solid fa-tv cursor-pointer text-xl" id="tvBtnNav"
-           onclick="closeActorPhotos(); _navAction('tv')"></i>
-        <i class="fa-solid fa-music cursor-pointer text-xl" id="musicBtnNav"
-           onclick="_navAction('music')"></i>
-    </nav>
+    <nav class="bottom-nav" id="globalBottomNav"></nav>
 
     <script>
         const API_KEY = 'bfa7df5310c9974f62f26c6789a8c00d';
@@ -2968,11 +2968,45 @@
             });
             initModalSwipeGestures();
             initTvModalSwipe();
+            renderAllNavs();
         };
 
         // Video controls modal film
         let _modalPlaying = true;
-        // ===== UNIVERSAL NAV ACTION =====
+        // ===== CENTRAL NAV RENDERER =====
+        // Edit di sini saja untuk ubah semua nav sekaligus
+        const NAV_ITEMS = [
+            { id: 'homeBtnNav',   icon: 'fa-solid fa-house',          action: 'home'   },
+            { id: 'searchBtnNav', icon: 'fa-solid fa-magnifying-glass',action: 'search' },
+            { id: 'reelsBtnNav',  icon: 'fa-solid fa-clapperboard',    action: 'reels'  },
+            { id: 'tvBtnNav',     icon: 'fa-solid fa-tv',              action: 'tv'     },
+            { id: 'musicBtnNav',  icon: 'fa-solid fa-music',           action: 'music'  },
+        ];
+
+        function renderBottomNav(containerId, activeAction, closeFunc) {
+            const el = document.getElementById(containerId);
+            if (!el) return;
+            el.innerHTML = NAV_ITEMS.map(item => {
+                const isActive = item.action === activeAction;
+                const onclick = closeFunc
+                    ? `${closeFunc}(); _navAction('${item.action}')`
+                    : `_navAction('${item.action}')`;
+                return `<div class="nav-item-wrap ${isActive ? 'nav-active' : ''}" onclick="${onclick}">
+                    <i class="${item.icon} cursor-pointer" style="font-size:20px"></i>
+                </div>`;
+            }).join('');
+        }
+
+        function renderAllNavs() {
+            // Main nav
+            renderBottomNav('globalBottomNav', 'home', null);
+            // TV nav
+            renderBottomNav('tvBottomNav', 'tv', 'closeTvModal');
+            // Reels nav
+            renderBottomNav('reelsBottomNavInner', 'reels', 'closeReelDetail(); closeReels');
+            // Movies Today nav
+            renderBottomNav('notifBottomNav', 'home', 'closeNotif');
+        }
         function _navAction(target) {
             // Tutup semua modal yang mungkin terbuka
             try { if(document.getElementById('tvModal').style.display==='block'){ document.getElementById('tvPlayerFrame').src=''; document.getElementById('tvModal').style.display='none'; document.body.style.overflow='auto'; }} catch(e){}
@@ -5391,19 +5425,20 @@
 
         // Tambah reels ke popstate handler
         function updateActiveNav(el) {
-            document.querySelectorAll('.bottom-nav i').forEach(i => {
-                i.classList.remove('active-nav');
-                // Music button: selalu solid, tidak perlu toggle outline/solid
-            });
+            document.querySelectorAll('.nav-item-wrap').forEach(w => w.classList.remove('nav-active'));
             if (el) {
-                el.classList.add('active-nav');
+                // Cari nav-item-wrap yang action-nya cocok
+                const action = (el.id||'').replace('BtnNav','').toLowerCase();
+                document.querySelectorAll('.nav-item-wrap').forEach(w => {
+                    const oc = w.getAttribute('onclick') || '';
+                    if (oc.includes(`'${action}'`)) w.classList.add('nav-active');
+                });
             }
-            // Tutup movieografi + actor modal jika nav bawah diklik (loncat langsung)
+            // Tutup movieografi + actor modal jika nav bawah diklik
             const mvg = document.getElementById('movieografiModal');
             if (mvg && mvg.style.display === 'block') {
                 mvg.style.display = 'none';
                 window._mvgFromActorId = null;
-                // Tutup juga actor modal agar tidak muncul di belakang
                 document.getElementById('actorModal').style.display = 'none';
                 document.body.style.overflow = 'auto';
             }
