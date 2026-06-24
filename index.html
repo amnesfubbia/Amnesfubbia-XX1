@@ -2046,6 +2046,9 @@
     </div>
 
     <div id="landscapeOverlay" class="landscape-overlay" onclick="toggleLsUI()">
+        <!-- Guard layer: blokir tap tembus ke iframe streaming pihak ketiga.
+             Aktif saat streaming (bukan trailer), nonaktif saat controls visible. -->
+        <div id="lsStreamingGuard" style="display:none;position:absolute;inset:0;z-index:9901;background:transparent;-webkit-tap-highlight-color:transparent"></div>
         <!-- Lock layer -->
         <div id="lsLockLayer" class="ls-lock-screen" style="display:none">
             <div class="ls-lock-badge" onclick="event.stopPropagation(); unlockScreen()">
@@ -3063,6 +3066,9 @@
             const ls = document.getElementById('lsYtControls');
             if (mv) mv.style.display = val;
             if (ls) ls.style.display = val;
+            // Guard layer: aktif saat streaming untuk cegah tap tembus ke iframe iklan
+            const guard = document.getElementById('lsStreamingGuard');
+            if (guard) guard.style.display = visible ? 'none' : 'block';
         }
         function modalVideoCmd(cmd) {
             const slides = document.querySelectorAll('.carousel-slide');
@@ -4575,6 +4581,9 @@
             const panel = document.getElementById('lsServerPanel');
             panel.classList.remove('open');
             panel.style.display = 'none';
+            // reset guard state
+            const guard = document.getElementById('lsStreamingGuard');
+            if (guard) { guard.style.display = 'none'; guard.dataset.streaming = '0'; }
 
             const videoArea = document.getElementById('mainVideoArea');
             const castContainer = document.getElementById('castContainer');
@@ -4593,17 +4602,30 @@
                 return;
             }
             const ui = document.getElementById('lsUI');
-            if(ui.classList.contains('visible')) { ui.classList.remove('visible'); } else { showLsUI(); }
+            if(ui.classList.contains('visible')) {
+                ui.classList.remove('visible');
+                // Guard kembali aktif saat controls disembunyikan (mode streaming)
+                const guard = document.getElementById('lsStreamingGuard');
+                if (guard && guard.dataset.streaming === '1') guard.style.display = 'block';
+            } else { showLsUI(); }
         }
 
         function showLsUI() {
             const ui = document.getElementById('lsUI');
             ui.classList.add('visible');
+            // Nonaktifkan guard sementara agar tombol controls bisa diklik
+            const guard = document.getElementById('lsStreamingGuard');
+            if (guard && guard.style.display !== 'none') {
+                guard.dataset.streaming = '1';
+                guard.style.display = 'none';
+            }
             clearTimeout(lsControlTimer);
             lsControlTimer = setTimeout(() => {
                 const panel = document.getElementById('lsServerPanel');
                 if(document.getElementById('lsLockLayer').style.display !== 'flex' && !panel.classList.contains('open')) {
                     ui.classList.remove('visible');
+                    // Guard kembali aktif setelah auto-hide (mode streaming)
+                    if (guard && guard.dataset.streaming === '1') guard.style.display = 'block';
                 }
             }, 4000);
         }
