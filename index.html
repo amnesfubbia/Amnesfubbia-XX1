@@ -2046,9 +2046,6 @@
     </div>
 
     <div id="landscapeOverlay" class="landscape-overlay" onclick="toggleLsUI()">
-        <!-- Guard layer: blokir tap tembus ke iframe streaming pihak ketiga.
-             Aktif saat streaming (bukan trailer), nonaktif saat controls visible. -->
-        <div id="lsStreamingGuard" style="display:none;position:absolute;inset:0;z-index:9901;background:transparent;-webkit-tap-highlight-color:transparent"></div>
         <!-- Lock layer -->
         <div id="lsLockLayer" class="ls-lock-screen" style="display:none">
             <div class="ls-lock-badge" onclick="event.stopPropagation(); unlockScreen()">
@@ -3066,9 +3063,6 @@
             const ls = document.getElementById('lsYtControls');
             if (mv) mv.style.display = val;
             if (ls) ls.style.display = val;
-            // Guard layer: aktif saat streaming untuk cegah tap tembus ke iframe iklan
-            const guard = document.getElementById('lsStreamingGuard');
-            if (guard) guard.style.display = visible ? 'none' : 'block';
         }
         function modalVideoCmd(cmd) {
             const slides = document.querySelectorAll('.carousel-slide');
@@ -4581,9 +4575,6 @@
             const panel = document.getElementById('lsServerPanel');
             panel.classList.remove('open');
             panel.style.display = 'none';
-            // reset guard state
-            const guard = document.getElementById('lsStreamingGuard');
-            if (guard) { guard.style.display = 'none'; guard.dataset.streaming = '0'; }
 
             const videoArea = document.getElementById('mainVideoArea');
             const castContainer = document.getElementById('castContainer');
@@ -4602,30 +4593,17 @@
                 return;
             }
             const ui = document.getElementById('lsUI');
-            if(ui.classList.contains('visible')) {
-                ui.classList.remove('visible');
-                // Guard kembali aktif saat controls disembunyikan (mode streaming)
-                const guard = document.getElementById('lsStreamingGuard');
-                if (guard && guard.dataset.streaming === '1') guard.style.display = 'block';
-            } else { showLsUI(); }
+            if(ui.classList.contains('visible')) { ui.classList.remove('visible'); } else { showLsUI(); }
         }
 
         function showLsUI() {
             const ui = document.getElementById('lsUI');
             ui.classList.add('visible');
-            // Nonaktifkan guard sementara agar tombol controls bisa diklik
-            const guard = document.getElementById('lsStreamingGuard');
-            if (guard && guard.style.display !== 'none') {
-                guard.dataset.streaming = '1';
-                guard.style.display = 'none';
-            }
             clearTimeout(lsControlTimer);
             lsControlTimer = setTimeout(() => {
                 const panel = document.getElementById('lsServerPanel');
                 if(document.getElementById('lsLockLayer').style.display !== 'flex' && !panel.classList.contains('open')) {
                     ui.classList.remove('visible');
-                    // Guard kembali aktif setelah auto-hide (mode streaming)
-                    if (guard && guard.dataset.streaming === '1') guard.style.display = 'block';
                 }
             }, 4000);
         }
@@ -7452,36 +7430,60 @@
 
         // Blokir redirect paksa dari iframe streaming (iklan yang bajak tab)
         // Cara kerja: deteksi jika halaman utama mau di-navigate ke URL lain
-        // yang bukan berasal dari aksi user → batalkan
+        // Blokir redirect dari iframe streaming (iklan) yang coba pindahkan top-level page
         (function blockIframeRedirect() {
             let _lastUserAction = 0;
-            // Tandai setiap interaksi user yang sah
             document.addEventListener('click', () => { _lastUserAction = Date.now(); }, true);
             document.addEventListener('touchend', () => { _lastUserAction = Date.now(); }, true);
             document.addEventListener('keydown', () => { _lastUserAction = Date.now(); }, true);
 
-            // Intersepsi beforeunload — dipanggil saat halaman mau pindah
+            // Blokir beforeunload yang tidak dipicu user (redirect paksa dari iframe)
             window.addEventListener('beforeunload', (e) => {
-                const timeSinceUser = Date.now() - _lastUserAction;
-                // Jika tidak ada aksi user dalam 1.5 detik terakhir → redirect dari iframe
-                if (timeSinceUser > 1500) {
+                if (Date.now() - _lastUserAction > 1500) {
                     e.preventDefault();
                     e.returnValue = '';
-                    // Kembalikan ke halaman ini
                     window.history.go(0);
                 }
             });
 
-            // Blokir window.open dari iframe yang mencurigakan (popup iklan)
+            // Blokir window.open popup iklan
             const _origOpen = window.open;
             window.open = function(url, target, features) {
-                // Izinkan hanya jika dipanggil dalam 500ms setelah aksi user
                 if (Date.now() - _lastUserAction < 500) {
                     return _origOpen.call(window, url, target, features);
                 }
                 console.log('[amnes] Popup diblokir:', url);
                 return null;
             };
+
+            // Blokir top.location / parent.location hijack dari iframe
+            try {
+                Object.defineProperty(window, 'top', {
+                    get: function() {
+                        // Kembalikan proxy yang intercept location assignment
+                        return new Proxy(window, {
+                            get(target, prop) {
+                                if (prop === 'location') {
+                                    return new Proxy(target.location, {
+                                        set(locTarget, locProp, value) {
+                                            if (Date.now() - _lastUserAction > 1500) {
+                                                console.log('[amnes] top.location hijack diblokir:', value);
+                                                return true;
+                                            }
+                                            locTarget[locProp] = value;
+                                            return true;
+                                        }
+                                    });
+                                }
+                                return typeof target[prop] === 'function' ? target[prop].bind(target) : target[prop];
+                            }
+                        });
+                    },
+                    configurable: true
+                });
+            } catch(e) {
+                // Browser tidak mengizinkan override window.top — fallback ke beforeunload saja
+            }
         })();
 
         function playVid(url, el) { 
@@ -7511,8 +7513,8 @@
             newIframe.setAttribute('referrerpolicy', 'no-referrer-when-downgrade');
             newIframe.setAttribute('scrolling', 'no');
             newIframe.setAttribute('frameborder', '0');
-            // Sandbox: blokir popup/redirect iklan tapi izinkan video tetap jalan
-            // No sandbox - biarkan server streaming berjalan normal
+            // Sandbox: izinkan script & video, tapi blokir top-navigation (redirect iklan)
+            newIframe.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-forms allow-presentation allow-popups-to-escape-sandbox');
             
             // FIX BUG 2: fallback timer — loader pasti sembunyi setelah 6 detik
             newIframe.onload = () => {
