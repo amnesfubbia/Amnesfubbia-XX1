@@ -1180,14 +1180,7 @@
         }
         .tv-switcher-name-new { font-size: 8px; font-weight: 700; color: #ccc; }
 
-        /* Universal nav item */
-        .nav-item-wrap {
-            flex: 1; display: flex; align-items: center; justify-content: center;
-            cursor: pointer; padding: 8px 0; color: #555; transition: color 0.2s;
-        }
-        .nav-item-wrap.nav-active i, .nav-item-wrap:active i { color: #fff; }
-        .tv-bottom-nav .nav-item-wrap { color: #555; }
-        .tv-bottom-nav .nav-item-wrap.nav-active i { color: #fff; }
+        /* TV Modal bottom nav - selaras dengan bottom-nav utama */
         .tv-bottom-nav {
             position: fixed; bottom: 0; left: 0; right: 0;
             background: #000; border-top: 1px solid #1c1c1c;
@@ -2828,9 +2821,8 @@
         </div>
     </div>
 
-    <nav class="reels-bottom-nav" id="reelsBottomNav" style="display:none">
-        <div id="reelsBottomNavInner" style="display:contents"></div>
-    </nav>
+    <!-- Bottom nav reels — terpisah dari reelsModal agar tidak tertutup overlay -->
+    <nav class="reels-bottom-nav" id="reelsBottomNav" style="display:none"></nav>
 
     <!-- ===== REEL DETAIL BOTTOM SHEET ===== -->
     <div id="reelDetailOverlay" onclick="closeReelDetail()"></div>
@@ -2905,10 +2897,9 @@
             <div class="notif-topbar-title">New Movies Today</div>
             <span class="notif-date-badge" id="notifDateBadge"></span>
         </div>
-        <div id="notifContent" style="padding-bottom:70px">
+        <div id="notifContent">
             <div class="notif-empty"><i class="fa-solid fa-film"></i>Loading...</div>
         </div>
-        <nav class="bottom-nav" id="notifBottomNav" style="position:fixed;bottom:0;left:0;right:0;z-index:10001"></nav>
     </div>
 
     <!-- ===== FOTO PEMERAN ===== -->
@@ -2922,8 +2913,7 @@
     </div>
 
 
-    <!-- ===== UNIVERSAL BOTTOM NAV ===== -->
-    <nav class="bottom-nav" id="globalBottomNav"></nav>
+    <nav class="bottom-nav" id="mainBottomNav"></nav>
 
     <script>
         const API_KEY = 'bfa7df5310c9974f62f26c6789a8c00d';
@@ -2939,7 +2929,92 @@
         let activeEpisode = 1;
         let activeSeason = 1;
 
+        // ─────────────────────────────────────────────────────
+        // NAV_ITEMS — single source of truth untuk semua bottom nav
+        // Tambah/hapus/edit item di sini, semua nav ikut berubah otomatis.
+        // ─────────────────────────────────────────────────────
+        const NAV_ITEMS = [
+            {
+                id:      'homeBtnNav',
+                icon:    'fa-solid fa-house',
+                onMain:  () => { closeActorPhotos(); updateActiveNav(document.getElementById('homeBtnNav')); backToHome(); },
+                onTv:    () => { closeTvModal(); updateActiveNav(document.getElementById('homeBtnNav')); backToHome(); },
+                onReels: () => { closeReelDetail(); closeReels(); updateActiveNav(document.getElementById('homeBtnNav')); backToHome(); },
+            },
+            {
+                id:      'searchBtnNav',
+                icon:    'fa-solid fa-magnifying-glass',
+                onMain:  () => { closeActorPhotos(); updateActiveNav(document.getElementById('searchBtnNav')); openSearch(); },
+                onTv:    () => { closeTvModal(); openSearch(); },
+                onReels: () => { closeReelDetail(); closeReels(); openSearch(); },
+            },
+            {
+                id:      'reelsBtnNav',
+                icon:    'fa-solid fa-clapperboard',
+                onMain:  () => { closeActorPhotos(); updateActiveNav(document.getElementById('reelsBtnNav')); openReels(); },
+                onTv:    () => { closeTvModal(); updateActiveNav(document.getElementById('reelsBtnNav')); openReels(); },
+                onReels: null, // item aktif di konteks Reels — tidak perlu action
+            },
+            {
+                id:      'tvBtnNav',
+                icon:    'fa-solid fa-tv',
+                onMain:  () => { closeActorPhotos(); updateActiveNav(document.getElementById('tvBtnNav')); openTvModal(); },
+                onTv:    null, // item aktif di konteks TV — tidak perlu action
+                onReels: () => { closeReelDetail(); closeReels(); updateActiveNav(document.getElementById('tvBtnNav')); openTvModal(); },
+            },
+            {
+                id:      'bookmarkBtnNav',
+                icon:    'fa-regular fa-bookmark',
+                onMain:  () => { closeActorPhotos(); updateActiveNav(document.getElementById('bookmarkBtnNav')); switchTab('bookmarks', document.getElementById('tabBookmark')); },
+                onTv:    () => { closeTvModal(); updateActiveNav(document.getElementById('bookmarkBtnNav')); switchTab('bookmarks', document.getElementById('tabBookmark')); },
+                onReels: () => { openBookmarksFromReels(); },
+            },
+        ];
+
+        function renderAllNavs() {
+            const mainNav  = document.getElementById('mainBottomNav');
+            const tvNav    = document.getElementById('tvBottomNav');
+            const reelsNav = document.getElementById('reelsBottomNav');
+
+            mainNav.innerHTML  = '';
+            tvNav.innerHTML    = '';
+            // Jaga style display:none yang sudah ada di reelsBottomNav
+            const reelsDisplay = reelsNav.style.display;
+            reelsNav.innerHTML = '';
+            reelsNav.style.display = reelsDisplay;
+
+            NAV_ITEMS.forEach((item, idx) => {
+                // ── Main nav ──────────────────────────────────
+                const mainEl = document.createElement('i');
+                mainEl.className = `${item.icon} cursor-pointer text-xl`;
+                mainEl.id = item.id;
+                if (idx === 0) mainEl.classList.add('active-nav');
+                mainEl.addEventListener('click', item.onMain);
+                mainNav.appendChild(mainEl);
+
+                // ── TV nav ────────────────────────────────────
+                const tvWrap = document.createElement('div');
+                tvWrap.className = 'tv-bottom-item' + (item.onTv === null ? ' tv-bottom-active' : '');
+                if (item.onTv) tvWrap.addEventListener('click', item.onTv);
+                const tvIcon = document.createElement('i');
+                tvIcon.className = `${item.icon} cursor-pointer`;
+                tvWrap.appendChild(tvIcon);
+                tvNav.appendChild(tvWrap);
+
+                // ── Reels nav ─────────────────────────────────
+                const reelsWrap = document.createElement('div');
+                reelsWrap.className = 'reels-bottom-item' + (item.onReels === null ? ' active-reel-nav' : '');
+                if (item.onReels) reelsWrap.addEventListener('click', item.onReels);
+                const reelsIcon = document.createElement('i');
+                reelsIcon.className = `${item.icon}`;
+                reelsWrap.appendChild(reelsIcon);
+                reelsNav.appendChild(reelsWrap);
+            });
+        }
+
         document.addEventListener('DOMContentLoaded', () => {
+            renderAllNavs();
+
             setTimeout(() => {
                 document.getElementById('splashScreen').style.display = 'none';
                 document.getElementById('mainProfile').style.display = 'block';
@@ -2968,63 +3043,10 @@
             });
             initModalSwipeGestures();
             initTvModalSwipe();
-            renderAllNavs();
         };
 
         // Video controls modal film
         let _modalPlaying = true;
-        // ===== CENTRAL NAV RENDERER =====
-        // Edit di sini saja untuk ubah semua nav sekaligus
-        const NAV_ITEMS = [
-            { id: 'homeBtnNav',   icon: 'fa-solid fa-house',          action: 'home'   },
-            { id: 'searchBtnNav', icon: 'fa-solid fa-magnifying-glass',action: 'search' },
-            { id: 'reelsBtnNav',  icon: 'fa-solid fa-clapperboard',    action: 'reels'  },
-            { id: 'tvBtnNav',     icon: 'fa-solid fa-tv',              action: 'tv'     },
-            { id: 'musicBtnNav',  icon: 'fa-solid fa-music',           action: 'music'  },
-        ];
-
-        function renderBottomNav(containerId, activeAction, closeFunc) {
-            const el = document.getElementById(containerId);
-            if (!el) return;
-            el.innerHTML = NAV_ITEMS.map(item => {
-                const isActive = item.action === activeAction;
-                const onclick = closeFunc
-                    ? `${closeFunc}(); _navAction('${item.action}')`
-                    : `_navAction('${item.action}')`;
-                return `<div class="nav-item-wrap ${isActive ? 'nav-active' : ''}" onclick="${onclick}">
-                    <i class="${item.icon} cursor-pointer" style="font-size:20px"></i>
-                </div>`;
-            }).join('');
-        }
-
-        function renderAllNavs() {
-            // Main nav
-            renderBottomNav('globalBottomNav', 'home', null);
-            // TV nav
-            renderBottomNav('tvBottomNav', 'tv', 'closeTvModal');
-            // Reels nav
-            renderBottomNav('reelsBottomNavInner', 'reels', 'closeReelDetail(); closeReels');
-            // Movies Today nav
-            renderBottomNav('notifBottomNav', 'home', 'closeNotif');
-        }
-        function _navAction(target) {
-            // Tutup semua modal yang mungkin terbuka
-            try { if(document.getElementById('tvModal').style.display==='block'){ document.getElementById('tvPlayerFrame').src=''; document.getElementById('tvModal').style.display='none'; document.body.style.overflow='auto'; }} catch(e){}
-            try { if(document.getElementById('reelsModal')&&document.getElementById('reelsModal').style.display==='block') _closeReelsSilent(); } catch(e){}
-            try { if(document.getElementById('movieModal').style.display==='block') _closeModalSilent(); } catch(e){}
-            try { if(document.getElementById('actorModal').classList.contains('open')) _closeActorModalSilent(); } catch(e){}
-            try { if(document.getElementById('searchOverlay').style.display==='block') _closeSearchSilent(); } catch(e){}
-            try { closeReelDetail && closeReelDetail(); } catch(e){}
-
-            switch(target) {
-                case 'home':   updateActiveNav(document.getElementById('homeBtnNav'));   backToHome();    break;
-                case 'search': updateActiveNav(document.getElementById('searchBtnNav')); openSearch();    break;
-                case 'reels':  updateActiveNav(document.getElementById('reelsBtnNav'));  openReels();     break;
-                case 'tv':     updateActiveNav(document.getElementById('tvBtnNav'));     openTvModal();   break;
-                case 'music':  window.open('https://monochrome.tf/','_blank');           break;
-            }
-        }
-
         let _modalMuted = false;
         function modalVideoCmd(cmd) {
             const slides = document.querySelectorAll('.carousel-slide');
@@ -5425,20 +5447,28 @@
 
         // Tambah reels ke popstate handler
         function updateActiveNav(el) {
-            document.querySelectorAll('.nav-item-wrap').forEach(w => w.classList.remove('nav-active'));
+            document.querySelectorAll('.bottom-nav i').forEach(i => {
+                i.classList.remove('active-nav');
+                // Bookmark: outline saat tidak aktif, solid saat aktif
+                if (i.id === 'bookmarkBtnNav') {
+                    i.className = i.className.replace('fa-solid', 'fa-regular').replace('active-nav', '');
+                    i.classList.add('fa-regular', 'fa-bookmark', 'cursor-pointer', 'text-xl');
+                }
+            });
             if (el) {
-                // Cari nav-item-wrap yang action-nya cocok
-                const action = (el.id||'').replace('BtnNav','').toLowerCase();
-                document.querySelectorAll('.nav-item-wrap').forEach(w => {
-                    const oc = w.getAttribute('onclick') || '';
-                    if (oc.includes(`'${action}'`)) w.classList.add('nav-active');
-                });
+                el.classList.add('active-nav');
+                // Jika bookmark aktif, ganti ke solid
+                if (el.id === 'bookmarkBtnNav') {
+                    el.classList.remove('fa-regular');
+                    el.classList.add('fa-solid');
+                }
             }
-            // Tutup movieografi + actor modal jika nav bawah diklik
+            // Tutup movieografi + actor modal jika nav bawah diklik (loncat langsung)
             const mvg = document.getElementById('movieografiModal');
             if (mvg && mvg.style.display === 'block') {
                 mvg.style.display = 'none';
                 window._mvgFromActorId = null;
+                // Tutup juga actor modal agar tidak muncul di belakang
                 document.getElementById('actorModal').style.display = 'none';
                 document.body.style.overflow = 'auto';
             }
@@ -5632,7 +5662,7 @@
             document.getElementById('mainProfile').style.display = 'block';
 
             // Update nav & tab
-            updateActiveNav(document.getElementById('homeBtnNav'));
+            updateActiveNav(document.getElementById('bookmarkBtnNav'));
             document.querySelectorAll('.tab-item').forEach(t => t.classList.remove('active'));
             document.getElementById('tabBookmark').classList.add('active');
             document.getElementById('tabLikes').classList.remove('active');
@@ -7752,7 +7782,7 @@
                 document.querySelectorAll('.tab-item').forEach(t => t.classList.remove('active'));
                 if (el) el.classList.add('active');
             }
-            if(mode === 'bookmarks') updateActiveNav(document.getElementById('homeBtnNav')); 
+            if(mode === 'bookmarks') updateActiveNav(document.getElementById('bookmarkBtnNav')); 
             else updateActiveNav(document.getElementById('homeBtnNav'));
             const grid = document.getElementById('feedGrid'); grid.innerHTML = ''; 
             if(mode === 'likes' || mode === 'bookmarks') { 
