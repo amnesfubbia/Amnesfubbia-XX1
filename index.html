@@ -2099,8 +2099,6 @@
                         </div>
                         <i class="fa-solid fa-forward-step ls-btn ls-btn-sm" onclick="event.stopPropagation(); lsCarouselNav(1)" title="Next"></i>
                     </div>
-                    <!-- Streaming play/pause: hanya tampil saat streaming aktif -->
-                    <i id="lsStreamPlayBtn" class="fa-solid fa-pause ls-btn" style="display:none;font-size:26px;border:2px solid #fff;border-radius:50%;padding:10px;width:48px;height:48px;align-items:center;justify-content:center;box-sizing:border-box" onclick="event.stopPropagation(); lsStreamPlayPause()" title="Play/Pause"></i>
                     <i class="fa-solid fa-expand ls-btn ls-btn-sm" onclick="event.stopPropagation(); tryFullscreen()" title="Fullscreen"></i>
                 </div>
                 <!-- server pill -->
@@ -3067,34 +3065,11 @@
             const ls = document.getElementById('lsYtControls');
             if (mv) mv.style.display = val;
             if (ls) ls.style.display = val;
-            // Tombol play/pause khusus streaming
-            const spb = document.getElementById('lsStreamPlayBtn');
-            if (spb) spb.style.display = visible ? 'none' : 'flex';
             // Guard aktif hanya saat streaming (bukan trailer)
             const guard = document.getElementById('lsStreamingGuard');
             if (guard) {
                 guard._isStreaming = !visible;
                 guard.style.display = (!visible) ? 'block' : 'none';
-            }
-        }
-
-        let _lsStreamPaused = false;
-        let _lsStreamSrc = '';
-        function lsStreamPlayPause() {
-            const iframe = document.getElementById('player-frame');
-            const btn = document.getElementById('lsStreamPlayBtn');
-            if (!iframe) return;
-            if (_lsStreamPaused) {
-                // Resume: restore src
-                iframe.src = _lsStreamSrc;
-                _lsStreamPaused = false;
-                if (btn) { btn.className = btn.className.replace('fa-play', 'fa-pause'); }
-            } else {
-                // Pause: simpan src, kosongkan
-                _lsStreamSrc = iframe.src;
-                iframe.src = '';
-                _lsStreamPaused = true;
-                if (btn) { btn.className = btn.className.replace('fa-pause', 'fa-play'); }
             }
         }
         function modalVideoCmd(cmd) {
@@ -7578,10 +7553,6 @@
             dots.innerHTML = '';
             swipeOverlay.style.display = 'none';
             swipeOverlay.style.pointerEvents = 'none';
-            // Reset streaming pause state & kontrol
-            _lsStreamPaused = false;
-            const spb = document.getElementById('lsStreamPlayBtn');
-            if (spb) spb.className = spb.className.replace('fa-play', 'fa-pause');
             setYtControlsVisible(false);
         }
         
