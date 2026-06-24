@@ -2083,17 +2083,20 @@
                 <!-- controls row -->
                 <div class="ls-controls-row" style="justify-content:space-around;align-items:center">
                     <i class="fa-solid fa-lock-open ls-btn ls-btn-sm" onclick="event.stopPropagation(); lockScreen()" title="Lock"></i>
-                    <i class="fa-solid fa-backward-step ls-btn ls-btn-sm" onclick="event.stopPropagation(); lsCarouselNav(-1)" title="Prev"></i>
-                    <div style="position:relative;display:inline-flex;align-items:center">
-                        <i class="fa-solid fa-rotate-left ls-btn ls-btn-sm" onclick="event.stopPropagation(); lsSeek(-10)" title="-10s"></i>
-                        <span style="font-size:8px;color:#fff;font-weight:700;position:absolute;bottom:2px;right:-2px">10</span>
+                    <!-- tombol YT-only: hanya tampil saat Trailer aktif -->
+                    <div id="lsYtControls" style="display:contents">
+                        <i class="fa-solid fa-backward-step ls-btn ls-btn-sm" onclick="event.stopPropagation(); lsCarouselNav(-1)" title="Prev"></i>
+                        <div style="position:relative;display:inline-flex;align-items:center">
+                            <i class="fa-solid fa-rotate-left ls-btn ls-btn-sm" onclick="event.stopPropagation(); lsSeek(-10)" title="-10s"></i>
+                            <span style="font-size:8px;color:#fff;font-weight:700;position:absolute;bottom:2px;right:-2px">10</span>
+                        </div>
+                        <i id="lsPlayBtn" class="fa-solid fa-pause ls-btn" style="font-size:26px;border:2px solid #fff;border-radius:50%;padding:10px;width:48px;height:48px;display:flex;align-items:center;justify-content:center;box-sizing:border-box" onclick="event.stopPropagation(); lsPlayPause()" title="Play/Pause"></i>
+                        <div style="position:relative;display:inline-flex;align-items:center">
+                            <i class="fa-solid fa-rotate-right ls-btn ls-btn-sm" onclick="event.stopPropagation(); lsSeek(10)" title="+10s"></i>
+                            <span style="font-size:8px;color:#fff;font-weight:700;position:absolute;bottom:2px;right:-2px">10</span>
+                        </div>
+                        <i class="fa-solid fa-forward-step ls-btn ls-btn-sm" onclick="event.stopPropagation(); lsCarouselNav(1)" title="Next"></i>
                     </div>
-                    <i id="lsPlayBtn" class="fa-solid fa-pause ls-btn" style="font-size:26px;border:2px solid #fff;border-radius:50%;padding:10px;width:48px;height:48px;display:flex;align-items:center;justify-content:center;box-sizing:border-box" onclick="event.stopPropagation(); lsPlayPause()" title="Play/Pause"></i>
-                    <div style="position:relative;display:inline-flex;align-items:center">
-                        <i class="fa-solid fa-rotate-right ls-btn ls-btn-sm" onclick="event.stopPropagation(); lsSeek(10)" title="+10s"></i>
-                        <span style="font-size:8px;color:#fff;font-weight:700;position:absolute;bottom:2px;right:-2px">10</span>
-                    </div>
-                    <i class="fa-solid fa-forward-step ls-btn ls-btn-sm" onclick="event.stopPropagation(); lsCarouselNav(1)" title="Next"></i>
                     <i class="fa-solid fa-expand ls-btn ls-btn-sm" onclick="event.stopPropagation(); tryFullscreen()" title="Fullscreen"></i>
                 </div>
                 <!-- server pill -->
@@ -2560,28 +2563,31 @@
                             <button onclick="lockScreen()" style="background:none;border:none;color:#fff;font-size:18px;padding:4px 8px;cursor:pointer" title="Lock">
                                 <i class="fa-solid fa-lock-open"></i>
                             </button>
-                            <!-- prev slide -->
-                            <button onclick="modalVideoCmd('prev')" style="background:none;border:none;color:#fff;font-size:20px;padding:4px 8px;cursor:pointer" title="Prev">
-                                <i class="fa-solid fa-backward-step"></i>
-                            </button>
-                            <!-- rewind 10s -->
-                            <button onclick="modalVideoCmd('back10')" style="background:none;border:none;color:#fff;font-size:20px;padding:4px 8px;cursor:pointer;position:relative" title="-10s">
-                                <i class="fa-solid fa-rotate-left"></i>
-                                <span style="font-size:8px;font-weight:800;position:absolute;bottom:2px;right:4px">10</span>
-                            </button>
-                            <!-- play/pause utama -->
-                            <button id="mvPlayBtn" onclick="modalVideoCmd('playpause')" style="background:none;border:2px solid #fff;border-radius:50%;color:#fff;font-size:22px;width:52px;height:52px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0" title="Play/Pause">
-                                <i class="fa-solid fa-pause"></i>
-                            </button>
-                            <!-- forward 10s -->
-                            <button onclick="modalVideoCmd('fwd10')" style="background:none;border:none;color:#fff;font-size:20px;padding:4px 8px;cursor:pointer;position:relative" title="+10s">
-                                <i class="fa-solid fa-rotate-right"></i>
-                                <span style="font-size:8px;font-weight:800;position:absolute;bottom:2px;right:4px">10</span>
-                            </button>
-                            <!-- next slide -->
-                            <button onclick="modalVideoCmd('next')" style="background:none;border:none;color:#fff;font-size:20px;padding:4px 8px;cursor:pointer" title="Next">
-                                <i class="fa-solid fa-forward-step"></i>
-                            </button>
+                            <!-- tombol YT-only: hanya tampil saat Trailer aktif -->
+                            <div id="mvYtControls" style="display:contents">
+                                <!-- prev slide -->
+                                <button onclick="modalVideoCmd('prev')" style="background:none;border:none;color:#fff;font-size:20px;padding:4px 8px;cursor:pointer" title="Prev">
+                                    <i class="fa-solid fa-backward-step"></i>
+                                </button>
+                                <!-- rewind 10s -->
+                                <button onclick="modalVideoCmd('back10')" style="background:none;border:none;color:#fff;font-size:20px;padding:4px 8px;cursor:pointer;position:relative" title="-10s">
+                                    <i class="fa-solid fa-rotate-left"></i>
+                                    <span style="font-size:8px;font-weight:800;position:absolute;bottom:2px;right:4px">10</span>
+                                </button>
+                                <!-- play/pause utama -->
+                                <button id="mvPlayBtn" onclick="modalVideoCmd('playpause')" style="background:none;border:2px solid #fff;border-radius:50%;color:#fff;font-size:22px;width:52px;height:52px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0" title="Play/Pause">
+                                    <i class="fa-solid fa-pause"></i>
+                                </button>
+                                <!-- forward 10s -->
+                                <button onclick="modalVideoCmd('fwd10')" style="background:none;border:none;color:#fff;font-size:20px;padding:4px 8px;cursor:pointer;position:relative" title="+10s">
+                                    <i class="fa-solid fa-rotate-right"></i>
+                                    <span style="font-size:8px;font-weight:800;position:absolute;bottom:2px;right:4px">10</span>
+                                </button>
+                                <!-- next slide -->
+                                <button onclick="modalVideoCmd('next')" style="background:none;border:none;color:#fff;font-size:20px;padding:4px 8px;cursor:pointer" title="Next">
+                                    <i class="fa-solid fa-forward-step"></i>
+                                </button>
+                            </div>
                             <!-- fullscreen / landscape -->
                             <button onclick="enterLandscape()" style="background:none;border:none;color:#fff;font-size:18px;padding:4px 8px;cursor:pointer" title="Fullscreen">
                                 <i class="fa-solid fa-expand"></i>
@@ -3048,6 +3054,16 @@
         // Video controls modal film
         let _modalPlaying = true;
         let _modalMuted = false;
+
+        // Sembunyikan/tampilkan kontrol YT-only (play/pause, seek, prev/next slide)
+        // Dipanggil: hide saat streaming aktif, show saat Trailer (YouTube) aktif
+        function setYtControlsVisible(visible) {
+            const val = visible ? 'contents' : 'none';
+            const mv = document.getElementById('mvYtControls');
+            const ls = document.getElementById('lsYtControls');
+            if (mv) mv.style.display = val;
+            if (ls) ls.style.display = val;
+        }
         function modalVideoCmd(cmd) {
             const slides = document.querySelectorAll('.carousel-slide');
             const iframe = document.getElementById(`vid-${currentIdx}`);
@@ -6837,6 +6853,7 @@
                     const fallbackUrl = buildEmbedUrl(type, id, 1, 1, 1);
                     track.innerHTML = `<div class="carousel-slide"><iframe id="player-frame" src="${fallbackUrl}" class="w-full h-full" allowfullscreen allow="autoplay; fullscreen; picture-in-picture"></iframe></div>`;
                     document.getElementById('swipeOverlay').style.display = 'none';
+                    setYtControlsVisible(false);
                     return;
                 }
 
@@ -6895,6 +6912,7 @@
                     const fallbackUrl = buildEmbedUrl(type, id, 1, 1, 1);
                     track.innerHTML = `<div class="carousel-slide"><iframe id="player-frame" src="${fallbackUrl}" class="w-full h-full" allowfullscreen allow="autoplay; fullscreen; picture-in-picture"></iframe></div>`;
                     document.getElementById('swipeOverlay').style.display = 'none';
+                    setYtControlsVisible(false);
                     return;
                 }
 
@@ -6914,6 +6932,7 @@
                 const soR = document.getElementById('swipeOverlay');
                 soR.style.display = vidsToDisplay.length > 1 ? 'block' : 'none';
                 soR.style.pointerEvents = 'auto';
+                setYtControlsVisible(true);
 
             } catch(e) { console.error(e); }
         }
@@ -7008,6 +7027,7 @@
                 const fallbackUrl = buildEmbedUrl(type, id, 1, 1, 1); 
                 track.innerHTML = `<div class="carousel-slide"><iframe id="player-frame" src="${fallbackUrl}" class="w-full h-full" allowfullscreen allow="autoplay; fullscreen; picture-in-picture"></iframe></div>`; 
                 document.getElementById('swipeOverlay').style.display = 'none';
+                setYtControlsVisible(false);
             };
 
             // Ambil semua video YouTube (Trailer & Teaser)
@@ -7108,6 +7128,7 @@
                 const so = document.getElementById('swipeOverlay');
                 so.style.display = vidsToDisplay.length > 1 ? 'block' : 'none';
                 so.style.pointerEvents = 'auto'; // aktifkan kembali untuk swipe trailer
+                setYtControlsVisible(true);
             } else { 
                 await handleTrailerError();
             }
@@ -7494,6 +7515,8 @@
             // overlay tidak diperlukan (hanya 1 slide) dan justru menghalangi tap ke iframe
             swipeOverlay.style.display = 'none';
             swipeOverlay.style.pointerEvents = 'none';
+            // Kontrol play/pause & seek tidak berlaku untuk server streaming pihak ketiga
+            setYtControlsVisible(false);
         }
         
         function changeServer(srvIdx, el) {
