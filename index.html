@@ -2046,6 +2046,8 @@
     </div>
 
     <div id="landscapeOverlay" class="landscape-overlay" onclick="toggleLsUI()">
+        <!-- Guard layer: blokir tap tembus ke iframe streaming saat controls hidden -->
+        <div id="lsStreamingGuard" style="display:none;position:absolute;inset:0;z-index:9999;background:transparent;-webkit-tap-highlight-color:transparent"></div>
         <!-- Lock layer -->
         <div id="lsLockLayer" class="ls-lock-screen" style="display:none">
             <div class="ls-lock-badge" onclick="event.stopPropagation(); unlockScreen()">
@@ -2097,6 +2099,8 @@
                         </div>
                         <i class="fa-solid fa-forward-step ls-btn ls-btn-sm" onclick="event.stopPropagation(); lsCarouselNav(1)" title="Next"></i>
                     </div>
+                    <!-- Streaming play/pause: hanya tampil saat streaming aktif -->
+                    <i id="lsStreamPlayBtn" class="fa-solid fa-pause ls-btn" style="display:none;font-size:26px;border:2px solid #fff;border-radius:50%;padding:10px;width:48px;height:48px;align-items:center;justify-content:center;box-sizing:border-box" onclick="event.stopPropagation(); lsStreamPlayPause()" title="Play/Pause"></i>
                     <i class="fa-solid fa-expand ls-btn ls-btn-sm" onclick="event.stopPropagation(); tryFullscreen()" title="Fullscreen"></i>
                 </div>
                 <!-- server pill -->
@@ -3063,6 +3067,35 @@
             const ls = document.getElementById('lsYtControls');
             if (mv) mv.style.display = val;
             if (ls) ls.style.display = val;
+            // Tombol play/pause khusus streaming
+            const spb = document.getElementById('lsStreamPlayBtn');
+            if (spb) spb.style.display = visible ? 'none' : 'flex';
+            // Guard aktif hanya saat streaming (bukan trailer)
+            const guard = document.getElementById('lsStreamingGuard');
+            if (guard) {
+                guard._isStreaming = !visible;
+                guard.style.display = (!visible) ? 'block' : 'none';
+            }
+        }
+
+        let _lsStreamPaused = false;
+        let _lsStreamSrc = '';
+        function lsStreamPlayPause() {
+            const iframe = document.getElementById('player-frame');
+            const btn = document.getElementById('lsStreamPlayBtn');
+            if (!iframe) return;
+            if (_lsStreamPaused) {
+                // Resume: restore src
+                iframe.src = _lsStreamSrc;
+                _lsStreamPaused = false;
+                if (btn) { btn.className = btn.className.replace('fa-play', 'fa-pause'); }
+            } else {
+                // Pause: simpan src, kosongkan
+                _lsStreamSrc = iframe.src;
+                iframe.src = '';
+                _lsStreamPaused = true;
+                if (btn) { btn.className = btn.className.replace('fa-pause', 'fa-play'); }
+            }
         }
         function modalVideoCmd(cmd) {
             const slides = document.querySelectorAll('.carousel-slide');
@@ -4571,11 +4604,11 @@
             document.body.classList.remove('landscape-active');
             const overlay = document.getElementById('landscapeOverlay');
             overlay.style.display = 'none';
-            // close server panel if open
             const panel = document.getElementById('lsServerPanel');
             panel.classList.remove('open');
             panel.style.display = 'none';
-
+            const guard = document.getElementById('lsStreamingGuard');
+            if (guard) { guard.style.display = 'none'; guard._isStreaming = false; }
             const videoArea = document.getElementById('mainVideoArea');
             const castContainer = document.getElementById('castContainer');
             if(castContainer && videoArea) { castContainer.after(videoArea); }
@@ -4585,7 +4618,6 @@
 
         function toggleLsUI() {
             if(document.getElementById('lsLockLayer').style.display === 'flex') return;
-            // If server panel open, just close it
             const panel = document.getElementById('lsServerPanel');
             if (panel.classList.contains('open')) {
                 panel.classList.remove('open');
@@ -4593,17 +4625,28 @@
                 return;
             }
             const ui = document.getElementById('lsUI');
-            if(ui.classList.contains('visible')) { ui.classList.remove('visible'); } else { showLsUI(); }
+            const guard = document.getElementById('lsStreamingGuard');
+            if(ui.classList.contains('visible')) {
+                ui.classList.remove('visible');
+                if (guard && guard._isStreaming) guard.style.display = 'block';
+            } else {
+                showLsUI();
+            }
         }
 
         function showLsUI() {
             const ui = document.getElementById('lsUI');
             ui.classList.add('visible');
+            // Nonaktifkan guard sementara agar controls bisa diklik
+            const guard = document.getElementById('lsStreamingGuard');
+            if (guard && guard._isStreaming) guard.style.display = 'none';
             clearTimeout(lsControlTimer);
             lsControlTimer = setTimeout(() => {
                 const panel = document.getElementById('lsServerPanel');
                 if(document.getElementById('lsLockLayer').style.display !== 'flex' && !panel.classList.contains('open')) {
                     ui.classList.remove('visible');
+                    // Guard kembali aktif setelah controls auto-hide
+                    if (guard && guard._isStreaming) guard.style.display = 'block';
                 }
             }, 4000);
         }
@@ -7513,8 +7556,6 @@
             newIframe.setAttribute('referrerpolicy', 'no-referrer-when-downgrade');
             newIframe.setAttribute('scrolling', 'no');
             newIframe.setAttribute('frameborder', '0');
-            // Sandbox: izinkan script & video, tapi blokir top-navigation (redirect iklan)
-            newIframe.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-forms allow-presentation allow-popups-to-escape-sandbox');
             
             // FIX BUG 2: fallback timer — loader pasti sembunyi setelah 6 detik
             newIframe.onload = () => {
@@ -7535,11 +7576,12 @@
             track.style.transform = 'translateX(0)'; 
             currentIdx = 0; 
             dots.innerHTML = '';
-            // FIX 2A: sembunyikan swipeOverlay saat streaming
-            // overlay tidak diperlukan (hanya 1 slide) dan justru menghalangi tap ke iframe
             swipeOverlay.style.display = 'none';
             swipeOverlay.style.pointerEvents = 'none';
-            // Kontrol play/pause & seek tidak berlaku untuk server streaming pihak ketiga
+            // Reset streaming pause state & kontrol
+            _lsStreamPaused = false;
+            const spb = document.getElementById('lsStreamPlayBtn');
+            if (spb) spb.className = spb.className.replace('fa-play', 'fa-pause');
             setYtControlsVisible(false);
         }
         
