@@ -4380,13 +4380,24 @@
 
             // Landscape overlay
             if (document.getElementById('landscapeOverlay').style.display === 'block') {
-                closeLandscapeSilently();
-                // Pastikan modal film tetap tampil setelah keluar landscape
-                const movieModal = document.getElementById('movieModal');
-                if (movieModal) {
-                    movieModal.style.display = 'block';
-                    document.body.style.overflow = 'hidden';
-                    document.body.classList.remove('landscape-active');
+                // Hanya close kalau ini memang back intentional dari state landscape
+                // Kalau state null/undefined = kemungkinan back dari iklan redirect, ignore
+                if (state === 'landscape' || state === null) {
+                    // state null bisa juga dari iklan — cek apakah ada state landscape di history
+                    // dengan cara: kalau state === null dan landscapeOverlay masih block,
+                    // ini kemungkinan back dari iklan → push state landscape lagi agar tidak hilang
+                    if (state === null) {
+                        history.pushState({view: 'landscape'}, '');
+                        return;
+                    }
+                    closeLandscapeSilently();
+                    // Pastikan modal film tetap tampil setelah keluar landscape
+                    const movieModal = document.getElementById('movieModal');
+                    if (movieModal) {
+                        movieModal.style.display = 'block';
+                        document.body.style.overflow = 'hidden';
+                        document.body.classList.remove('landscape-active');
+                    }
                 }
                 return;
             }
@@ -5455,6 +5466,21 @@
                 Object.values(window._ytPlayers || {}).forEach(p => {
                     try { if (p && p.pauseVideo) p.pauseVideo(); } catch(e) {}
                 });
+            } else {
+                // Kembali visible — kalau landscape masih aktif, re-lock orientation
+                if (document.body.classList.contains('landscape-active')) {
+                    try {
+                        if (document.documentElement.requestFullscreen && !document.fullscreenElement) {
+                            document.documentElement.requestFullscreen().then(() => {
+                                if (screen.orientation && screen.orientation.lock) {
+                                    screen.orientation.lock('landscape').catch(() => {});
+                                }
+                            }).catch(() => {});
+                        } else if (screen.orientation && screen.orientation.lock) {
+                            screen.orientation.lock('landscape').catch(() => {});
+                        }
+                    } catch(e) {}
+                }
             }
         });
 
