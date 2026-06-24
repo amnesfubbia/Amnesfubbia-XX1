@@ -3058,11 +3058,11 @@
         // Sembunyikan/tampilkan kontrol YT-only (play/pause, seek, prev/next slide)
         // Dipanggil: hide saat streaming aktif, show saat Trailer (YouTube) aktif
         function setYtControlsVisible(visible) {
-            const val = visible ? 'contents' : 'none';
+            // Kontrol selalu tampil di semua mode (trailer maupun streaming)
             const mv = document.getElementById('mvYtControls');
             const ls = document.getElementById('lsYtControls');
-            if (mv) mv.style.display = val;
-            if (ls) ls.style.display = val;
+            if (mv) mv.style.display = 'contents';
+            if (ls) ls.style.display = 'contents';
         }
         function modalVideoCmd(cmd) {
             const slides = document.querySelectorAll('.carousel-slide');
